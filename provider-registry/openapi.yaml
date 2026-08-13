@@ -1,0 +1,232 @@
+openapi: 3.0.3
+info:
+  title: Provider Registry API
+  version: 1.0.0
+  description: System-of-record for AI providers, capabilities, pricing, health, credentials, and rate limits.
+paths:
+  /v1/providers:
+    get:
+      summary: List providers
+      parameters:
+        - in: query
+          name: cursor
+          schema:
+            type: string
+        - in: query
+          name: limit
+          schema:
+            type: integer
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [active, disabled, deprecated]
+      responses:
+        '200':
+          description: Paginated list of providers
+    post:
+      summary: Register new provider
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [slug, display_name, secret_key]
+              properties:
+                slug:
+                  type: string
+                display_name:
+                  type: string
+                secret_key:
+                  type: string
+                region_codes:
+                  type: array
+                  items:
+                    type: string
+                org_id:
+                  type: string
+                  nullable: true
+                environment:
+                  type: string
+                  enum: [production, staging]
+      responses:
+        '201':
+          description: Provider registered successfully
+
+  /v1/providers/{id}:
+    get:
+      summary: Get provider by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Provider details
+        '404':
+          description: Provider not found
+    patch:
+      summary: Update provider details
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Updated provider
+    delete:
+      summary: Soft-delete provider (sets status=deprecated)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Soft-deleted provider
+
+  /v1/capabilities:
+    get:
+      summary: Lookup providers by capability and region
+      parameters:
+        - in: query
+          name: type
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: region
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Matching providers sorted by quality_score descending
+
+  /v1/providers/{id}/capabilities:
+    get:
+      summary: Get provider capabilities
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Provider capabilities
+    post:
+      summary: Add capability to provider
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '201':
+          description: Capability created
+
+  /v1/providers/{id}/capabilities/{capId}:
+    patch:
+      summary: Update capability
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: capId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Capability updated
+
+  /v1/providers/{id}/pricing:
+    get:
+      summary: Get provider pricing
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Pricing entries
+    post:
+      summary: Add pricing entry
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '201':
+          description: Pricing entry created
+
+  /v1/providers/{id}/health:
+    get:
+      summary: Get provider health record
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Provider health
+
+  /v1/providers/{id}/health-check:
+    post:
+      summary: Record health check
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Health check recorded
+
+  /v1/providers/health-summary:
+    get:
+      summary: Health summary for all providers
+      responses:
+        '200':
+          description: Health summary
+
+  /v1/providers/{id}/rate-limits:
+    get:
+      summary: Get provider rate limits
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Provider rate limits
+    put:
+      summary: Replace provider rate limits
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Rate limits updated

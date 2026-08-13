@@ -1,0 +1,44 @@
+{
+  "keys": [
+    {
+      "id": "heygen-key-1786431830420",
+      "provider": "heygen",
+      "keyName": "Live HeyGen Key Alpha",
+      "keySecret": "hg_live_998877665544332211",
+      "maskedKey": "hg_live_...2211",
+      "monthlyBudgetUsd": 10000,
+      "usedBudgetUsd": 0,
+      "minuteLimit": 100,
+      "requestsThisMinute": 0,
+      "minuteWindowStart": 1786431830420,
+      "status": "ACTIVE",
+      "latencyMs": 300,
+      "failureCount": 0,
+      "successCount": 0,
+      "lastUsed": 1786431830420,
+      "cooldownUntil": 0,
+      "priority": 1,
+      "weight": 100
+    },
+    {
+      "id": "google-veo-key-1786427103246",
+      "provider": "google-veo",
+      "keyName": "Live Test Key 1",
+      "keySecret": "AQ.LiveTestKeySecrets9981",
+      "maskedKey": "AQ.LiveT...9981",
+      "monthlyBudgetUsd": 10000,
+      "usedBudgetUsd": 0,
+      "minuteLimit": 100,
+      "requestsThisMinute": 0,
+      "minuteWindowStart": 1786427103246,
+      "status": "ACTIVE",
+      "latencyMs": 300,
+      "failureCount": 0,
+      "successCount": 0,
+      "lastUsed": 1786427103246,
+      "cooldownUntil": 0,
+      "priority": 1,
+      "weight": 100
+    }
+  ]
+}

@@ -1,0 +1,105 @@
+{
+  "avatars": {
+    "sys-av-1": {
+      "id": "sys-av-1",
+      "user_id": "system",
+      "org_id": "system",
+      "name": "Elena Rostova",
+      "type": "Real Clone V",
+      "model_quality": "Avatar V High-Fidelity",
+      "thumbnail_url": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=600&auto=format&fit=crop&q=80",
+      "assigned_voice_id": "sys-voice-1",
+      "assigned_voice_name": "Annie - Lifelike",
+      "status": "Ready",
+      "pose": "Upper Body",
+      "is_system": true,
+      "created_at": "2026-08-11T15:43:42.819Z",
+      "updated_at": "2026-08-11T15:43:42.819Z"
+    },
+    "sys-av-2": {
+      "id": "sys-av-2",
+      "user_id": "system",
+      "org_id": "system",
+      "name": "Cyber Maya",
+      "type": "Virtual AI",
+      "model_quality": "Avatar IV Standard",
+      "thumbnail_url": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&auto=format&fit=crop&q=80",
+      "assigned_voice_id": "sys-voice-2",
+      "assigned_voice_name": "Hope - Multilingual",
+      "status": "Ready",
+      "pose": "Portrait",
+      "is_system": true,
+      "created_at": "2026-08-11T15:43:42.819Z",
+      "updated_at": "2026-08-11T15:43:42.819Z"
+    },
+    "sys-av-3": {
+      "id": "sys-av-3",
+      "user_id": "system",
+      "org_id": "system",
+      "name": "Marcus Vance",
+      "type": "Real Clone V",
+      "model_quality": "Avatar V High-Fidelity",
+      "thumbnail_url": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=600&auto=format&fit=crop&q=80",
+      "assigned_voice_id": "sys-voice-3",
+      "assigned_voice_name": "Ben - Warm Narration",
+      "status": "Ready",
+      "pose": "Upper Body",
+      "is_system": true,
+      "created_at": "2026-08-11T15:43:42.819Z",
+      "updated_at": "2026-08-11T15:43:42.819Z"
+    }
+  },
+  "voices": {
+    "sys-voice-1": {
+      "id": "sys-voice-1",
+      "name": "Annie - Lifelike",
+      "desc": "Natural, Explainer, Professional, Female, ElevenLabs",
+      "gender": "Female",
+      "country": "🇺🇸",
+      "category": "Lifelike",
+      "is_system": true,
+      "created_at": "2026-08-11T15:43:42.815Z"
+    },
+    "sys-voice-2": {
+      "id": "sys-voice-2",
+      "name": "Hope - Multilingual",
+      "desc": "Young, Energetic, Social Media, Female, ElevenLabs",
+      "gender": "Female",
+      "country": "🇺🇸",
+      "category": "Lifelike",
+      "is_system": true,
+      "created_at": "2026-08-11T15:43:42.816Z"
+    },
+    "sys-voice-3": {
+      "id": "sys-voice-3",
+      "name": "Ben - Warm Narration",
+      "desc": "Captivating, Warm, Middle-Aged, Male, ElevenLabs",
+      "gender": "Male",
+      "country": "🌐",
+      "category": "Lifelike",
+      "is_system": true,
+      "created_at": "2026-08-11T15:43:42.816Z"
+    },
+    "sys-voice-4": {
+      "id": "sys-voice-4",
+      "name": "Archer - Soothing UK",
+      "desc": "Middle Aged, Easy Listening, Male, ElevenLabs",
+      "gender": "Male",
+      "country": "🇬🇧",
+      "category": "Lifelike",
+      "is_system": true,
+      "created_at": "2026-08-11T15:43:42.816Z"
+    },
+    "sys-voice-5": {
+      "id": "sys-voice-5",
+      "name": "Sawyer - Energetic",
+      "desc": "Young, Warm, Narration, Male, ElevenLabs",
+      "gender": "Male",
+      "country": "🇺🇸",
+      "category": "Standard",
+      "is_system": true,
+      "created_at": "2026-08-11T15:43:42.816Z"
+    }
+  },
+  "avatar_videos": {}
+}

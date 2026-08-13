@@ -1,0 +1,114 @@
+openapi: 3.0.3
+info:
+  title: Workflow Engine API
+  version: 1.0.0
+  description: Visual DAG graph compilation, cycle validation, topological sorting, and asynchronous workflow execution orchestration.
+paths:
+  /v1/workflows:
+    get:
+      summary: List workflow definitions
+      parameters:
+        - in: query
+          name: project_id
+          schema:
+            type: string
+        - in: query
+          name: cursor
+          schema:
+            type: string
+        - in: query
+          name: limit
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Paginated list of workflows
+    post:
+      summary: Create workflow definition
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [project_id, name]
+              properties:
+                project_id:
+                  type: string
+                name:
+                  type: string
+                description:
+                  type: string
+                nodes:
+                  type: array
+                edges:
+                  type: array
+      responses:
+        '201':
+          description: Workflow created
+        '400':
+          description: Invalid input or DAG cycle detected
+
+  /v1/workflows/{id}:
+    get:
+      summary: Get workflow definition
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Workflow details
+        '404':
+          description: Workflow not found
+    patch:
+      summary: Update workflow definition (increments version)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Workflow updated (version incremented)
+
+  /v1/workflows/{id}/run:
+    post:
+      summary: Start workflow run asynchronously
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                user_id:
+                  type: string
+                inputs:
+                  type: object
+      responses:
+        '202':
+          description: Run accepted and queued
+
+  /v1/workflows/runs/{run_id}:
+    get:
+      summary: Get workflow run instance and step progression
+      parameters:
+        - in: path
+          name: run_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Workflow run details
+        '404':
+          description: Run not found

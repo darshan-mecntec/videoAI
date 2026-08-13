@@ -1,0 +1,21 @@
+{
+  "name": "ai-creative-studio-platform",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Enterprise AI Creative Studio Platform — Monorepo Root",
+  "scripts": {
+    "dev:provider-registry": "cd provider-registry && npm run dev",
+    "dev:workflow-engine": "cd workflow-engine && npm run dev",
+    "dev:asset-service": "cd asset-service && npm run dev",
+    "dev:auth-service": "cd auth-service && npm run dev",
+    "dev:project-service": "cd project-service && npm run dev",
+    "dev:metrics-service": "cd metrics-service && npm run dev",
+    "dev:video-service": "cd video-service && npm run dev",
+    "dev:avatar-service": "cd avatar-service && npm run dev",
+    "dev:web-studio": "cd web-studio && npx next dev --webpack",
+    "dev:all": "npx concurrently -n \"REGISTRY,ASSET,AUTH,PROJECT,METRICS,VIDEO,WORKFLOW,AVATAR,WEB\" -c \"blue,bgBlue,bgYellow,bgMagenta,bgCyan,white,magenta,bgGreen,cyan\" \"npm run dev:provider-registry\" \"npm run dev:asset-service\" \"npm run dev:auth-service\" \"npm run dev:project-service\" \"npm run dev:metrics-service\" \"npm run dev:video-service\" \"npm run dev:workflow-engine\" \"npm run dev:avatar-service\" \"npm run dev:web-studio\""
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

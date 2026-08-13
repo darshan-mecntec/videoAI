@@ -1,0 +1,90 @@
+openapi: 3.0.3
+info:
+  title: Provider Routing Engine API
+  version: 1.0.0
+  description: Real-time candidate scoring, fallback chain creation, and policy enforcement engine.
+paths:
+  /v1/routing/route:
+    post:
+      summary: Compute provider routing decision
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [capability_type]
+              properties:
+                request_id:
+                  type: string
+                capability_type:
+                  type: string
+                region:
+                  type: string
+                org_id:
+                  type: string
+                strategy_preference:
+                  type: string
+                  enum: [lowest_cost, highest_quality, lowest_latency, balanced]
+                max_cost_usd:
+                  type: number
+      responses:
+        '200':
+          description: Primary provider decision and fallback chain
+        '404':
+          description: No suitable active provider found matching constraints
+
+  /v1/routing/policies/{org_id}:
+    get:
+      summary: Get org routing policy
+      parameters:
+        - in: path
+          name: org_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Org routing policy
+    put:
+      summary: Set org routing policy
+      parameters:
+        - in: path
+          name: org_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Policy updated
+
+  /v1/routing/feedback:
+    post:
+      summary: Record provider execution outcome feedback
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [call_id, provider_id, capability_type, success]
+              properties:
+                call_id:
+                  type: string
+                provider_id:
+                  type: string
+                capability_type:
+                  type: string
+                success:
+                  type: boolean
+                latency_ms:
+                  type: number
+                cost_usd:
+                  type: number
+                error_code:
+                  type: string
+                attempt_number:
+                  type: integer
+      responses:
+        '200':
+          description: Outcome feedback acknowledged

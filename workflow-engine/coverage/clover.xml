@@ -1,0 +1,288 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<coverage generated="1785763862335" clover="3.2.0">
+  <project timestamp="1785763862335" name="All files">
+    <metrics statements="240" coveredstatements="235" conditionals="81" coveredconditionals="65" methods="36" coveredmethods="34" elements="357" coveredelements="334" complexity="0" loc="240" ncloc="240" packages="5" files="9" classes="9"/>
+    <package name="src">
+      <metrics statements="23" coveredstatements="23" conditionals="11" coveredconditionals="11" methods="1" coveredmethods="1"/>
+      <file name="app.ts" path="E:\AICreativeStudioPlatform\workflow-engine\src\app.ts">
+        <metrics statements="23" coveredstatements="23" conditionals="11" coveredconditionals="11" methods="1" coveredmethods="1"/>
+        <line num="1" count="1" type="stmt"/>
+        <line num="2" count="1" type="stmt"/>
+        <line num="3" count="1" type="stmt"/>
+        <line num="4" count="1" type="stmt"/>
+        <line num="5" count="1" type="stmt"/>
+        <line num="6" count="1" type="stmt"/>
+        <line num="7" count="1" type="stmt"/>
+        <line num="8" count="1" type="stmt"/>
+        <line num="9" count="1" type="stmt"/>
+        <line num="18" count="1" type="cond" truecount="1" falsecount="0"/>
+        <line num="26" count="4" type="cond" truecount="2" falsecount="0"/>
+        <line num="27" count="4" type="cond" truecount="2" falsecount="0"/>
+        <line num="28" count="4" type="cond" truecount="2" falsecount="0"/>
+        <line num="29" count="4" type="cond" truecount="2" falsecount="0"/>
+        <line num="31" count="4" type="stmt"/>
+        <line num="33" count="4" type="stmt"/>
+        <line num="34" count="4" type="stmt"/>
+        <line num="39" count="4" type="stmt"/>
+        <line num="40" count="4" type="stmt"/>
+        <line num="42" count="4" type="stmt"/>
+        <line num="43" count="4" type="stmt"/>
+        <line num="45" count="4" type="stmt"/>
+        <line num="47" count="4" type="stmt"/>
+      </file>
+    </package>
+    <package name="src.api">
+      <metrics statements="55" coveredstatements="53" conditionals="11" coveredconditionals="8" methods="9" coveredmethods="9"/>
+      <file name="middleware.ts" path="E:\AICreativeStudioPlatform\workflow-engine\src\api\middleware.ts">
+        <metrics statements="15" coveredstatements="15" conditionals="9" coveredconditionals="7" methods="2" coveredmethods="2"/>
+        <line num="2" count="1" type="stmt"/>
+        <line num="3" count="1" type="stmt"/>
+        <line num="9" count="1" type="stmt"/>
+        <line num="10" count="10" type="cond" truecount="2" falsecount="0"/>
+        <line num="11" count="10" type="stmt"/>
+        <line num="12" count="10" type="stmt"/>
+        <line num="13" count="10" type="stmt"/>
+        <line num="16" count="1" type="stmt"/>
+        <line num="23" count="4" type="cond" truecount="1" falsecount="1"/>
+        <line num="25" count="4" type="cond" truecount="1" falsecount="0"/>
+        <line num="26" count="3" type="stmt"/>
+        <line num="34" count="3" type="stmt"/>
+        <line num="35" count="3" type="stmt"/>
+        <line num="38" count="1" type="stmt"/>
+        <line num="46" count="1" type="stmt"/>
+      </file>
+      <file name="routes.ts" path="E:\AICreativeStudioPlatform\workflow-engine\src\api\routes.ts">
+        <metrics statements="40" coveredstatements="38" conditionals="2" coveredconditionals="1" methods="7" coveredmethods="7"/>
+        <line num="1" count="1" type="stmt"/>
+        <line num="4" count="1" type="stmt"/>
+        <line num="5" count="4" type="stmt"/>
+        <line num="8" count="4" type="stmt"/>
+        <line num="9" count="2" type="stmt"/>
+        <line num="10" count="2" type="stmt"/>
+        <line num="11" count="1" type="stmt"/>
+        <line num="13" count="1" type="stmt"/>
+        <line num="18" count="4" type="stmt"/>
+        <line num="19" count="2" type="stmt"/>
+        <line num="20" count="2" type="stmt"/>
+        <line num="21" count="2" type="stmt"/>
+        <line num="22" count="2" type="cond" truecount="1" falsecount="1"/>
+        <line num="23" count="2" type="stmt"/>
+        <line num="24" count="1" type="stmt"/>
+        <line num="26" count="1" type="stmt"/>
+        <line num="31" count="4" type="stmt"/>
+        <line num="32" count="2" type="stmt"/>
+        <line num="33" count="2" type="stmt"/>
+        <line num="34" count="1" type="stmt"/>
+        <line num="36" count="1" type="stmt"/>
+        <line num="41" count="4" type="stmt"/>
+        <line num="42" count="2" type="stmt"/>
+        <line num="43" count="2" type="stmt"/>
+        <line num="44" count="2" type="stmt"/>
+        <line num="51" count="1" type="stmt"/>
+        <line num="53" count="1" type="stmt"/>
+        <line num="58" count="4" type="stmt"/>
+        <line num="59" count="1" type="stmt"/>
+        <line num="60" count="1" type="stmt"/>
+        <line num="61" count="1" type="stmt"/>
+        <line num="67" count="1" type="stmt"/>
+        <line num="69" count="0" type="stmt"/>
+        <line num="74" count="4" type="stmt"/>
+        <line num="75" count="1" type="stmt"/>
+        <line num="76" count="1" type="stmt"/>
+        <line num="77" count="1" type="stmt"/>
+        <line num="78" count="1" type="stmt"/>
+        <line num="84" count="0" type="stmt"/>
+        <line num="88" count="4" type="stmt"/>
+      </file>
+    </package>
+    <package name="src.domain">
+      <metrics statements="125" coveredstatements="123" conditionals="44" coveredconditionals="33" methods="14" coveredmethods="13"/>
+      <file name="dagCompiler.ts" path="E:\AICreativeStudioPlatform\workflow-engine\src\domain\dagCompiler.ts">
+        <metrics statements="44" coveredstatements="43" conditionals="12" coveredconditionals="8" methods="2" coveredmethods="2"/>
+        <line num="1" count="3" type="stmt"/>
+        <line num="3" count="3" type="stmt"/>
+        <line num="5" count="20" type="cond" truecount="1" falsecount="1"/>
+        <line num="6" count="20" type="cond" truecount="1" falsecount="1"/>
+        <line num="8" count="20" type="cond" truecount="1" falsecount="0"/>
+        <line num="9" count="7" type="stmt"/>
+        <line num="17" count="25" type="stmt"/>
+        <line num="20" count="13" type="stmt"/>
+        <line num="21" count="15" type="cond" truecount="0" falsecount="1"/>
+        <line num="22" count="0" type="stmt"/>
+        <line num="24" count="15" type="cond" truecount="1" falsecount="0"/>
+        <line num="25" count="1" type="stmt"/>
+        <line num="30" count="12" type="stmt"/>
+        <line num="31" count="12" type="stmt"/>
+        <line num="33" count="12" type="stmt"/>
+        <line num="34" count="24" type="stmt"/>
+        <line num="35" count="24" type="stmt"/>
+        <line num="38" count="12" type="stmt"/>
+        <line num="39" count="14" type="stmt"/>
+        <line num="40" count="14" type="stmt"/>
+        <line num="44" count="12" type="stmt"/>
+        <line num="45" count="12" type="stmt"/>
+        <line num="46" count="12" type="stmt"/>
+        <line num="48" count="12" type="stmt"/>
+        <line num="49" count="24" type="cond" truecount="1" falsecount="0"/>
+        <line num="50" count="10" type="stmt"/>
+        <line num="54" count="12" type="stmt"/>
+        <line num="55" count="12" type="stmt"/>
+        <line num="57" count="12" type="stmt"/>
+        <line num="58" count="19" type="stmt"/>
+        <line num="63" count="19" type="stmt"/>
+        <line num="65" count="19" type="stmt"/>
+        <line num="67" count="19" type="stmt"/>
+        <line num="68" count="20" type="cond" truecount="1" falsecount="1"/>
+        <line num="69" count="20" type="stmt"/>
+        <line num="70" count="10" type="stmt"/>
+        <line num="71" count="10" type="stmt"/>
+        <line num="72" count="10" type="cond" truecount="1" falsecount="0"/>
+        <line num="73" count="10" type="stmt"/>
+        <line num="78" count="19" type="stmt"/>
+        <line num="79" count="19" type="stmt"/>
+        <line num="83" count="12" type="cond" truecount="1" falsecount="0"/>
+        <line num="84" count="2" type="stmt"/>
+        <line num="87" count="10" type="stmt"/>
+      </file>
+      <file name="types.ts" path="E:\AICreativeStudioPlatform\workflow-engine\src\domain\types.ts">
+        <metrics statements="6" coveredstatements="6" conditionals="0" coveredconditionals="0" methods="1" coveredmethods="1"/>
+        <line num="93" count="3" type="stmt"/>
+        <line num="99" count="10" type="stmt"/>
+        <line num="100" count="10" type="stmt"/>
+        <line num="101" count="10" type="stmt"/>
+        <line num="102" count="10" type="stmt"/>
+        <line num="103" count="10" type="stmt"/>
+      </file>
+      <file name="workflowService.ts" path="E:\AICreativeStudioPlatform\workflow-engine\src\domain\workflowService.ts">
+        <metrics statements="75" coveredstatements="74" conditionals="32" coveredconditionals="25" methods="11" coveredmethods="10"/>
+        <line num="1" count="2" type="stmt"/>
+        <line num="2" count="2" type="stmt"/>
+        <line num="21" count="2" type="stmt"/>
+        <line num="23" count="13" type="stmt"/>
+        <line num="24" count="13" type="stmt"/>
+        <line num="25" count="13" type="stmt"/>
+        <line num="26" count="13" type="stmt"/>
+        <line num="30" count="10" type="cond" truecount="3" falsecount="0"/>
+        <line num="31" count="1" type="stmt"/>
+        <line num="34" count="9" type="stmt"/>
+        <line num="35" count="9" type="stmt"/>
+        <line num="48" count="9" type="stmt"/>
+        <line num="50" count="8" type="stmt"/>
+        <line num="54" count="13" type="stmt"/>
+        <line num="55" count="13" type="cond" truecount="1" falsecount="0"/>
+        <line num="56" count="3" type="stmt"/>
+        <line num="58" count="10" type="stmt"/>
+        <line num="62" count="3" type="stmt"/>
+        <line num="66" count="4" type="stmt"/>
+        <line num="68" count="3" type="stmt"/>
+        <line num="79" count="3" type="stmt"/>
+        <line num="81" count="3" type="stmt"/>
+        <line num="82" count="3" type="cond" truecount="1" falsecount="0"/>
+        <line num="83" count="1" type="stmt"/>
+        <line num="85" count="2" type="stmt"/>
+        <line num="89" count="3" type="stmt"/>
+        <line num="92" count="3" type="stmt"/>
+        <line num="94" count="3" type="stmt"/>
+        <line num="95" count="3" type="cond" truecount="2" falsecount="0"/>
+        <line num="96" count="3" type="stmt"/>
+        <line num="98" count="3" type="stmt"/>
+        <line num="99" count="3" type="stmt"/>
+        <line num="100" count="5" type="stmt"/>
+        <line num="107" count="3" type="stmt"/>
+        <line num="121" count="3" type="stmt"/>
+        <line num="124" count="3" type="stmt"/>
+        <line num="125" count="3" type="stmt"/>
+        <line num="126" count="0" type="stmt"/>
+        <line num="130" count="3" type="stmt"/>
+        <line num="134" count="5" type="stmt"/>
+        <line num="135" count="5" type="cond" truecount="1" falsecount="0"/>
+        <line num="136" count="2" type="stmt"/>
+        <line num="138" count="3" type="stmt"/>
+        <line num="142" count="3" type="stmt"/>
+        <line num="143" count="3" type="cond" truecount="0" falsecount="1"/>
+        <line num="146" count="3" type="stmt"/>
+        <line num="147" count="3" type="stmt"/>
+        <line num="149" count="3" type="stmt"/>
+        <line num="161" count="3" type="stmt"/>
+        <line num="162" count="5" type="stmt"/>
+        <line num="165" count="3" type="stmt"/>
+        <line num="166" count="5" type="stmt"/>
+        <line num="167" count="5" type="stmt"/>
+        <line num="168" count="5" type="stmt"/>
+        <line num="169" count="5" type="cond" truecount="2" falsecount="1"/>
+        <line num="171" count="5" type="stmt"/>
+        <line num="172" count="5" type="stmt"/>
+        <line num="174" count="5" type="stmt"/>
+        <line num="175" count="5" type="cond" truecount="1" falsecount="0"/>
+        <line num="176" count="3" type="stmt"/>
+        <line num="177" count="2" type="stmt"/>
+        <line num="178" count="2" type="stmt"/>
+        <line num="181" count="4" type="stmt"/>
+        <line num="182" count="4" type="stmt"/>
+        <line num="183" count="4" type="stmt"/>
+        <line num="188" count="4" type="stmt"/>
+        <line num="190" count="4" type="stmt"/>
+        <line num="201" count="1" type="stmt"/>
+        <line num="202" count="1" type="cond" truecount="1" falsecount="1"/>
+        <line num="203" count="1" type="stmt"/>
+        <line num="208" count="3" type="cond" truecount="1" falsecount="0"/>
+        <line num="209" count="2" type="stmt"/>
+        <line num="211" count="3" type="stmt"/>
+        <line num="212" count="3" type="stmt"/>
+        <line num="214" count="3" type="stmt"/>
+      </file>
+    </package>
+    <package name="src.events">
+      <metrics statements="4" coveredstatements="3" conditionals="0" coveredconditionals="0" methods="2" coveredmethods="1"/>
+      <file name="publisher.ts" path="E:\AICreativeStudioPlatform\workflow-engine\src\events\publisher.ts">
+        <metrics statements="4" coveredstatements="3" conditionals="0" coveredconditionals="0" methods="2" coveredmethods="1"/>
+        <line num="44" count="2" type="stmt"/>
+        <line num="45" count="13" type="stmt"/>
+        <line num="48" count="10" type="stmt"/>
+        <line num="52" count="0" type="stmt"/>
+      </file>
+    </package>
+    <package name="src.infra">
+      <metrics statements="33" coveredstatements="33" conditionals="15" coveredconditionals="13" methods="10" coveredmethods="10"/>
+      <file name="repository.ts" path="E:\AICreativeStudioPlatform\workflow-engine\src\infra\repository.ts">
+        <metrics statements="31" coveredstatements="31" conditionals="15" coveredconditionals="13" methods="9" coveredmethods="9"/>
+        <line num="16" count="2" type="stmt"/>
+        <line num="17" count="13" type="stmt"/>
+        <line num="18" count="13" type="stmt"/>
+        <line num="21" count="3" type="stmt"/>
+        <line num="22" count="3" type="cond" truecount="1" falsecount="0"/>
+        <line num="23" count="5" type="stmt"/>
+        <line num="25" count="3" type="cond" truecount="2" falsecount="0"/>
+        <line num="26" count="3" type="stmt"/>
+        <line num="27" count="3" type="cond" truecount="1" falsecount="0"/>
+        <line num="28" count="1" type="stmt"/>
+        <line num="29" count="1" type="cond" truecount="1" falsecount="0"/>
+        <line num="30" count="1" type="stmt"/>
+        <line num="33" count="3" type="stmt"/>
+        <line num="34" count="3" type="cond" truecount="4" falsecount="0"/>
+        <line num="35" count="3" type="stmt"/>
+        <line num="39" count="13" type="cond" truecount="2" falsecount="0"/>
+        <line num="43" count="8" type="stmt"/>
+        <line num="44" count="8" type="stmt"/>
+        <line num="48" count="2" type="stmt"/>
+        <line num="49" count="2" type="cond" truecount="0" falsecount="1"/>
+        <line num="50" count="2" type="stmt"/>
+        <line num="55" count="2" type="stmt"/>
+        <line num="56" count="2" type="stmt"/>
+        <line num="60" count="3" type="stmt"/>
+        <line num="61" count="3" type="stmt"/>
+        <line num="65" count="8" type="cond" truecount="2" falsecount="0"/>
+        <line num="69" count="6" type="stmt"/>
+        <line num="70" count="6" type="cond" truecount="0" falsecount="1"/>
+        <line num="71" count="6" type="stmt"/>
+        <line num="75" count="6" type="stmt"/>
+        <line num="76" count="6" type="stmt"/>
+      </file>
+      <file name="routingClient.ts" path="E:\AICreativeStudioPlatform\workflow-engine\src\infra\routingClient.ts">
+        <metrics statements="2" coveredstatements="2" conditionals="0" coveredconditionals="0" methods="1" coveredmethods="1"/>
+        <line num="21" count="2" type="stmt"/>
+        <line num="27" count="2" type="stmt"/>
+      </file>
+    </package>
+  </project>
+</coverage>
