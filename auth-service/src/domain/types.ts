@@ -1,4 +1,4 @@
-export type UserRole = 'super_admin' | 'org_admin' | 'editor' | 'member' | 'viewer';
+export type UserRole = 'super_admin' | 'member';
 
 export type Permission =
   | 'platform:admin'
@@ -16,7 +16,8 @@ export type Permission =
   | 'billing:view'
   | 'apikeys:manage'
   | 'pool:manage'
-  | 'audit:read';
+  | 'audit:read'
+  | 'webhooks:manage';
 
 export interface User {
   id: string;
@@ -48,7 +49,30 @@ export interface Organization {
   name: string;
   slug: string;
   plan: 'free' | 'pro' | 'enterprise';
+  max_concurrent_jobs?: number;
   created_at: string;
+}
+
+export interface OrgInvite {
+  id: string;
+  org_id: string;
+  email: string;
+  role: UserRole;
+  token: string;
+  status: 'pending' | 'accepted' | 'revoked';
+  expires_at: string;
+  created_at: string;
+}
+
+export interface AuditLogEntry {
+  id: string;
+  org_id: string;
+  user_id: string;
+  user_email: string;
+  action: string;
+  target: string;
+  ip: string;
+  timestamp: string;
 }
 
 export interface ApiKey {
@@ -56,8 +80,38 @@ export interface ApiKey {
   org_id: string;
   name: string;
   key_hint: string;
-  secret: string;
+  secret_hash: string;
+  secret_raw?: string; // Only returned once on creation
+  scopes: string[];
+  expires_at?: string | null;
+  last_used_at?: string | null;
+  status: 'active' | 'revoked';
   created_at: string;
+}
+
+export interface CreditLedgerRecord {
+  id: string;
+  userId: string;
+  orgId: string;
+  modelId?: string;
+  amount: number;
+  type: 'RESERVE' | 'COMMIT' | 'REFUND' | 'TOPUP' | 'SUBSCRIPTION' | 'GRANT';
+  status: 'COMPLETED' | 'PENDING' | 'ROLLED_BACK';
+  description: string;
+  providerCostUsd?: number;
+  timestamp: string;
+}
+
+export interface WebhookEndpoint {
+  id: string;
+  org_id: string;
+  url: string;
+  description: string;
+  secret: string;
+  events: string[];
+  status: 'active' | 'paused';
+  created_at: string;
+  last_dispatched_at?: string | null;
 }
 
 export interface ApiErrorResponseBody {
@@ -82,4 +136,5 @@ export class AppError extends Error {
     Object.setPrototypeOf(this, AppError.prototype);
   }
 }
+
 

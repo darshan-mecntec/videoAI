@@ -238,13 +238,14 @@ export function createRouter(
     }
   });
 
-  // GET /v1/pools/keys
+  // GET /v1/pools/keys — Return sanitized key pool entries (secrets masked)
   router.get('/v1/pools/keys', async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { globalApiKeyPool } = await import('../domain/apiKeyPoolManager');
       const provider = req.query.provider as string | undefined;
-      const keys = globalApiKeyPool.getPoolKeys(provider);
-      res.status(200).json({ keys });
+      const rawKeys = globalApiKeyPool.getPoolKeys(provider);
+      const sanitizedKeys = rawKeys.map(({ keySecret, ...safeKey }) => safeKey);
+      res.status(200).json({ keys: sanitizedKeys });
     } catch (err) {
       next(err);
     }
@@ -284,12 +285,120 @@ export function createRouter(
     }
   });
 
-  // POST /v1/pools/keys/:keyId/toggle
-  router.post('/v1/pools/keys/:keyId/toggle', async (req: Request, res: Response, next: NextFunction) => {
+  // POST /v1/pools/select-key — DWLC algorithm selection
+  router.post('/v1/pools/select-key', async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { globalApiKeyPool } = await import('../domain/apiKeyPoolManager');
-      const updated = globalApiKeyPool.togglePoolKey(req.params.keyId);
-      res.status(200).json({ key: updated });
+      const { modelId, provider } = req.body;
+      const selected = globalApiKeyPool.selectBestKey(modelId || provider || 'google-veo');
+      res.status(200).json({ success: true, key: selected });
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  // POST /v1/pools/release-key — Release in-flight connection & update USD spend
+  router.post('/v1/pools/release-key', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { globalApiKeyPool } = await import('../domain/apiKeyPoolManager');
+      const { keyId, costUsd, latencyMs } = req.body;
+      globalApiKeyPool.releaseKeyConnection(keyId, costUsd, latencyMs);
+      res.status(200).json({ success: true });
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  // --- AI Model Catalogue Endpoints ---
+
+  // GET /v1/models (User-facing: Enabled models filtered by optional modality)
+  router.get('/v1/models', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { globalModelCatalogueService } = await import('../domain/modelCatalogueService');
+      const modality = req.query.modality as string | undefined;
+      const models = await globalModelCatalogueService.getEnabledModels(modality);
+      res.status(200).json({ models });
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  // GET /v1/admin/models (Admin-facing: All models including disabled)
+  router.get('/v1/admin/models', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { globalModelCatalogueService } = await import('../domain/modelCatalogueService');
+      const models = await globalModelCatalogueService.getAllModels();
+      res.status(200).json({ models });
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  // POST /v1/admin/models (Admin: Create new model in catalogue)
+  router.post('/v1/admin/models', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { globalModelCatalogueService } = await import('../domain/modelCatalogueService');
+      const model = await globalModelCatalogueService.addModel(req.body);
+      res.status(201).json({ model });
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  // PATCH /v1/admin/models/:id (Admin: Update model or toggle enabled/featured)
+  router.patch('/v1/admin/models/:id', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { globalModelCatalogueService } = await import('../domain/modelCatalogueService');
+      const updated = await globalModelCatalogueService.updateModel(req.params.id, req.body);
+      res.status(200).json({ model: updated });
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  // DELETE /v1/admin/models/:id (Admin: Delete model from catalogue)
+  router.delete('/v1/admin/models/:id', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { globalModelCatalogueService } = await import('../domain/modelCatalogueService');
+      const deleted = await globalModelCatalogueService.deleteModel(req.params.id);
+      res.status(200).json({ success: deleted });
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  // --- Semantic Prompt Cache Endpoints (Portkey / Cloudflare AI Gateway Grade) ---
+
+  // POST /v1/cache/lookup
+  router.post('/v1/cache/lookup', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { globalPromptCache } = await import('../domain/promptCacheService');
+      const { prompt, modelId, aspectRatio } = req.body;
+      const cached = globalPromptCache.get(prompt, modelId, aspectRatio);
+      res.status(200).json({ hit: !!cached, cache: cached });
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  // POST /v1/cache/store
+  router.post('/v1/cache/store', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { globalPromptCache } = await import('../domain/promptCacheService');
+      const { prompt, modelId, aspectRatio, resultData, ttlMs } = req.body;
+      const stored = globalPromptCache.set(prompt, modelId, aspectRatio, resultData, ttlMs);
+      res.status(201).json({ success: true, cache: stored });
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  // GET /v1/cache/stats
+  router.get('/v1/cache/stats', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { globalPromptCache } = await import('../domain/promptCacheService');
+      const stats = globalPromptCache.getStats();
+      res.status(200).json({ stats });
     } catch (err) {
       next(err);
     }

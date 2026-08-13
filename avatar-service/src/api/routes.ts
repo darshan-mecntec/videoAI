@@ -21,7 +21,7 @@ export function createRouter(avatarService: AvatarService): Router {
   // POST /v1/avatars — Create a new avatar (Real Clone, Virtual AI, Photo Avatar)
   router.post('/v1/avatars', authMiddleware, requirePermission('video:generate'), async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
-      const userId = req.userToken?.sub || 'usr-1c94e86b';
+      const userId = req.userToken?.sub || 'usr-admin-1';
       const orgId = req.userToken?.org_id || 'org-main-1';
       const isSuperAdmin = req.userToken?.role === 'super_admin';
 
@@ -38,10 +38,22 @@ export function createRouter(avatarService: AvatarService): Router {
     }
   });
 
+  // POST /v1/avatars/:id/looks/generate — Generate 5-second motion video looks for avatar & auto-save to asset-service
+  router.post('/v1/avatars/:id/looks/generate', authMiddleware, requirePermission('video:generate'), async (req: AuthRequest, res: Response, next: NextFunction) => {
+    try {
+      const userId = req.userToken?.sub || 'usr-admin-1';
+      const lookNames = req.body.look_names || req.body.looks;
+      const avatar = await avatarService.generateAvatarLooks(req.params.id, userId, lookNames);
+      res.status(200).json({ success: true, avatar });
+    } catch (err) {
+      next(err);
+    }
+  });
+
   // DELETE /v1/avatars/:id — Delete avatar
   router.delete('/v1/avatars/:id', authMiddleware, requirePermission('video:generate'), async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
-      const userId = req.userToken?.sub || 'usr-1c94e86b';
+      const userId = req.userToken?.sub || 'usr-admin-1';
       const isSuperAdmin = req.userToken?.role === 'super_admin';
       const deleted = await avatarService.deleteAvatar(req.params.id, userId, isSuperAdmin);
       res.status(200).json({ success: deleted });
@@ -64,7 +76,7 @@ export function createRouter(avatarService: AvatarService): Router {
   // POST /v1/voices — Clone / Create voice
   router.post('/v1/voices', authMiddleware, requirePermission('video:generate'), async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
-      const userId = req.userToken?.sub || 'usr-1c94e86b';
+      const userId = req.userToken?.sub || 'usr-admin-1';
       const isSuperAdmin = req.userToken?.role === 'super_admin';
       const voice = await avatarService.createVoice(req.body, userId, isSuperAdmin);
       res.status(201).json({ success: true, voice });
@@ -76,7 +88,7 @@ export function createRouter(avatarService: AvatarService): Router {
   // DELETE /v1/voices/:id — Delete custom voice
   router.delete('/v1/voices/:id', authMiddleware, requirePermission('video:generate'), async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
-      const userId = req.userToken?.sub || 'usr-1c94e86b';
+      const userId = req.userToken?.sub || 'usr-admin-1';
       const isSuperAdmin = req.userToken?.role === 'super_admin';
       const deleted = await avatarService.deleteVoice(req.params.id, userId, isSuperAdmin);
       res.status(200).json({ success: deleted });
@@ -119,6 +131,20 @@ export function createRouter(avatarService: AvatarService): Router {
       const userId = req.userToken?.sub;
       const videos = await avatarService.listAvatarVideos(userId);
       res.status(200).json({ success: true, videos });
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  // POST /v1/voice/synthesize — Synthesize voice audio with ElevenLabs AI API
+  router.post('/v1/voice/synthesize', authMiddleware, async (req: AuthRequest, res: Response, next: NextFunction) => {
+    try {
+      const userId = req.userToken?.sub || 'usr-admin-1';
+      const result = await avatarService.synthesizeVoiceAudio({
+        ...req.body,
+        userId,
+      });
+      res.status(200).json({ success: true, ...result });
     } catch (err) {
       next(err);
     }

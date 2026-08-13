@@ -16,6 +16,7 @@ export interface ApiKeyPoolEntry {
   usedBudgetUsd: number;
   minuteLimit: number;
   requestsThisMinute: number;
+  activeConnections: number; // In-flight concurrent connections count for DWLC
   minuteWindowStart: number;
   status: 'ACTIVE' | 'COOLING_DOWN' | 'EXHAUSTED' | 'DISABLED';
   latencyMs: number;
@@ -42,6 +43,7 @@ export interface PoolTelemetrySummary {
 export class ApiKeyPoolManager {
   private jsonStore: JsonFilePoolStore;
   private pgStore: PostgresPoolStore | null = null;
+  private activeKeysCache: Map<string, ApiKeyPoolEntry> = new Map();
 
   constructor(customJsonStore?: JsonFilePoolStore) {
     this.jsonStore = customJsonStore || globalJsonPoolStore;
@@ -52,25 +54,50 @@ export class ApiKeyPoolManager {
     }
 
     this.ensureInitialPoolsLoaded();
+
+    // Background maintenance sweep every 30s: auto-recovers cooldown keys & reclaims connection leaks
+    setInterval(() => {
+      try {
+        const keys = this.getPoolKeys();
+        const now = Date.now();
+        keys.forEach((k) => {
+          if (k.status === 'COOLING_DOWN' && now >= (k.cooldownUntil || 0)) {
+            k.status = 'ACTIVE';
+            k.failureCount = 0;
+            this.updateKeyConfig(k.id, k);
+          }
+          if ((k.activeConnections || 0) > 0 && now - (k.lastUsed || 0) > 180000) {
+            k.activeConnections = 0;
+            this.updateKeyConfig(k.id, k);
+          }
+        });
+      } catch (_) {}
+    }, 30000);
   }
 
   private ensureInitialPoolsLoaded() {
+    const realEnvKeys = this.buildInitialEnvKeys();
+
     if (this.pgStore) {
       this.pgStore.readKeys().then((keys) => {
-        if (keys.length === 0) {
-          const initial = this.buildInitialEnvKeys();
-          initial.forEach((k) => this.pgStore!.addKey(k).catch(() => {}));
-        }
+        // Remove fake dummy keys from Postgres store if present
+        const fakeKeys = keys.filter((k) => k.keySecret.includes('LiveTestKey') || k.keySecret.includes('hg_live_'));
+        fakeKeys.forEach((fk) => this.pgStore!.deleteKey(fk.id).catch(() => {}));
+
+        // Insert real env keys into Postgres DB
+        realEnvKeys.forEach((k) => this.pgStore!.addKey(k).catch(() => {}));
       }).catch(() => {});
     } else {
-      const keys = this.jsonStore.readKeys();
-      if (keys.length === 0) {
-        const initial = this.buildInitialEnvKeys();
-        if (initial.length > 0) {
-          this.jsonStore.writeKeys(initial);
-        }
-      }
+      const keys = this.jsonStore.readKeys().filter((k) => !k.keySecret.includes('LiveTestKey') && !k.keySecret.includes('hg_live_'));
+      realEnvKeys.forEach((rk) => {
+        if (!keys.some((k) => k.id === rk.id)) keys.push(rk);
+      });
+      this.jsonStore.writeKeys(keys);
     }
+
+    // Populate in-memory fast cache
+    const initialList = this.jsonStore.readKeys();
+    initialList.forEach((k) => this.activeKeysCache.set(k.id, k));
   }
 
   private buildInitialEnvKeys(): ApiKeyPoolEntry[] {
@@ -90,6 +117,7 @@ export class ApiKeyPoolManager {
         usedBudgetUsd: 0,
         minuteLimit: 120,
         requestsThisMinute: 0,
+        activeConnections: 0,
         minuteWindowStart: Date.now(),
         status: 'ACTIVE',
         latencyMs: 310 + index * 15,
@@ -115,9 +143,36 @@ export class ApiKeyPoolManager {
         usedBudgetUsd: 0,
         minuteLimit: 500,
         requestsThisMinute: 0,
+        activeConnections: 0,
         minuteWindowStart: Date.now(),
         status: 'ACTIVE',
         latencyMs: 480,
+        failureCount: 0,
+        successCount: 0,
+        lastUsed: Date.now(),
+        cooldownUntil: 0,
+        priority: 1,
+        weight: 100,
+      });
+    }
+
+    const elevenLabsKey = process.env.ELEVENLABS_API_KEY;
+    if (elevenLabsKey && elevenLabsKey.trim()) {
+      const masked = `${elevenLabsKey.substring(0, 8)}...${elevenLabsKey.substring(Math.max(0, elevenLabsKey.length - 4))}`;
+      initialKeys.push({
+        id: 'elevenlabs-key-1',
+        provider: 'elevenlabs',
+        keyName: 'ElevenLabs Voice Key Alpha',
+        keySecret: elevenLabsKey,
+        maskedKey: masked,
+        monthlyBudgetUsd: 10000,
+        usedBudgetUsd: 0,
+        minuteLimit: 300,
+        requestsThisMinute: 0,
+        activeConnections: 0,
+        minuteWindowStart: Date.now(),
+        status: 'ACTIVE',
+        latencyMs: 220,
         failureCount: 0,
         successCount: 0,
         lastUsed: Date.now(),
@@ -131,22 +186,36 @@ export class ApiKeyPoolManager {
   }
 
   public getPoolKeys(providerSlug?: string): ApiKeyPoolEntry[] {
-    let keys: ApiKeyPoolEntry[] = [];
-    if (this.pgStore) {
-      // Synchronous read fallback for API compatibility while async completes
-      keys = this.jsonStore.readKeys();
-      this.pgStore.readKeys().then((pgKeys) => {
-        if (pgKeys.length > 0) this.jsonStore.writeKeys(pgKeys);
-      }).catch(() => {});
-    } else {
-      keys = this.jsonStore.readKeys();
+    const envKeys = this.buildInitialEnvKeys();
+    
+    // Ensure in-memory cache contains all env keys
+    for (const ek of envKeys) {
+      if (!this.activeKeysCache.has(ek.id)) {
+        this.activeKeysCache.set(ek.id, ek);
+        if (this.pgStore) this.pgStore.addKey(ek).catch(() => {});
+      }
     }
+
+    const keys = Array.from(this.activeKeysCache.values()).filter((k) => !k.keySecret.includes('LiveTestKey') && !k.keySecret.includes('hg_live_'));
 
     if (providerSlug) {
       const slug = providerSlug.toLowerCase();
       return keys.filter((k) => k.provider.toLowerCase() === slug);
     }
     return keys;
+  }
+
+  /**
+   * Virtual Key Model Resolver: Maps user-facing model selection to physical provider slug
+   */
+  public resolveModelToProvider(modelId: string): string {
+    const m = (modelId || '').toLowerCase();
+    if (m.includes('gpt') || m.includes('dall-e') || m.includes('openai')) return 'openai';
+    if (m.includes('eleven') || m.includes('voice') || m.includes('tts')) return 'elevenlabs';
+    if (m.includes('runway') || m.includes('gen-3')) return 'runway';
+    if (m.includes('kling')) return 'kling';
+    if (m.includes('luma')) return 'luma';
+    return 'google-veo'; // Default Google Veo / Imagen 3
   }
 
   public addPoolKey(
@@ -169,6 +238,7 @@ export class ApiKeyPoolManager {
       usedBudgetUsd: 0,
       minuteLimit: 100,
       requestsThisMinute: 0,
+      activeConnections: 0,
       minuteWindowStart: Date.now(),
       status: 'ACTIVE',
       latencyMs: 300,
@@ -186,33 +256,94 @@ export class ApiKeyPoolManager {
     return this.jsonStore.addKey(newEntry);
   }
 
-  public selectBestKey(providerSlug: string): ApiKeyPoolEntry {
+  /**
+   * Dynamic Weighted Least Connections (DWLC) Selection Algorithm
+   * Routes traffic to the key with the lowest active in-flight connections & non-exhausted budget.
+   */
+  public selectBestKey(providerOrModel: string): ApiKeyPoolEntry {
+    const providerSlug = this.resolveModelToProvider(providerOrModel);
     const keys = this.getPoolKeys(providerSlug);
+    const now = Date.now();
+
+    keys.forEach((k) => {
+      // 1. Cooldown Auto-Recovery: Recover keys whose cooldown timer has expired
+      if (k.status === 'COOLING_DOWN' && now >= (k.cooldownUntil || 0)) {
+        k.status = 'ACTIVE';
+        k.failureCount = 0;
+        console.log(`[ApiKeyPoolManager] Auto-recovered key ${k.id} from COOLING_DOWN to ACTIVE.`);
+        this.updateKeyConfig(k.id, k);
+      }
+
+      // 2. Connection Leak Sweeper (180s Lease TTL): Auto-reclaim orphaned active connections
+      if ((k.activeConnections || 0) > 0 && now - (k.lastUsed || 0) > 180000) {
+        console.warn(`[ApiKeyPoolManager] Connection leak detected on key ${k.id}. Auto-reclaiming ${k.activeConnections} orphaned connection(s).`);
+        k.activeConnections = 0;
+        this.updateKeyConfig(k.id, k);
+      }
+
+      // 3. Sliding Minute Window Reset
+      if (now - (k.minuteWindowStart || 0) > 60000) {
+        k.requestsThisMinute = 0;
+        k.minuteWindowStart = now;
+        this.updateKeyConfig(k.id, k);
+      }
+
+      // 4. Spend Cap Check: Mark keys whose budget is exceeded as EXHAUSTED
+      if (k.monthlyBudgetUsd > 0 && k.usedBudgetUsd >= k.monthlyBudgetUsd && k.status === 'ACTIVE') {
+        k.status = 'EXHAUSTED';
+        this.updateKeyConfig(k.id, k);
+      }
+    });
+
     const available = keys.filter((k) => k.status === 'ACTIVE');
     if (available.length === 0) {
       if (keys.length > 0) return keys[0];
-      throw new Error(`All API keys exhausted for provider '${providerSlug}'`);
+      throw new Error(`All API keys exhausted or spend cap reached for '${providerOrModel}'`);
     }
-    available.sort((a, b) => a.priority - b.priority || a.latencyMs - b.latencyMs);
+
+    // Sort by Dynamic Weighted Least Connections (DWLC)
+    available.sort((a, b) => {
+      const activeA = a.activeConnections || 0;
+      const activeB = b.activeConnections || 0;
+      if (activeA !== activeB) return activeA - activeB;
+      if (a.requestsThisMinute !== b.requestsThisMinute) return a.requestsThisMinute - b.requestsThisMinute;
+      return a.priority - b.priority || a.latencyMs - b.latencyMs;
+    });
+
     const selected = available[0];
+    selected.activeConnections = (selected.activeConnections || 0) + 1;
     selected.requestsThisMinute++;
-    selected.lastUsed = Date.now();
+    selected.lastUsed = now;
     this.updateKeyConfig(selected.id, selected);
     return selected;
   }
 
-  public reportSuccess(keyId: string, latencyMs: number, costUsd: number = 0.05) {
+  /**
+   * Release in-flight connection & reconcile USD provider cost
+   */
+  public releaseKeyConnection(keyId: string, costUsd: number = 0.05, latencyMs: number = 300) {
     try {
       const keys = this.getPoolKeys();
       const entry = keys.find((k) => k.id === keyId);
       if (entry) {
+        entry.activeConnections = Math.max(0, (entry.activeConnections || 1) - 1);
         entry.successCount++;
-        entry.usedBudgetUsd = Number((entry.usedBudgetUsd + costUsd).toFixed(4));
+        entry.usedBudgetUsd = Number(((entry.usedBudgetUsd || 0) + costUsd).toFixed(4));
         entry.latencyMs = Math.round(entry.latencyMs * 0.7 + latencyMs * 0.3);
         entry.failureCount = 0;
+
+        if (entry.monthlyBudgetUsd > 0 && entry.usedBudgetUsd >= entry.monthlyBudgetUsd) {
+          entry.status = 'EXHAUSTED';
+          console.warn(`[ApiKeyPoolManager] Spend cap reached ($${entry.usedBudgetUsd}/$${entry.monthlyBudgetUsd}) for key ${entry.id}. Status set to EXHAUSTED.`);
+        }
+
         this.updateKeyConfig(keyId, entry);
       }
     } catch (_) {}
+  }
+
+  public reportSuccess(keyId: string, latencyMs: number, costUsd: number = 0.05) {
+    this.releaseKeyConnection(keyId, costUsd, latencyMs);
   }
 
   public reportFailure(keyId: string, errorCode: number = 429) {
@@ -231,6 +362,11 @@ export class ApiKeyPoolManager {
   }
 
   public updateKeyConfig(keyId: string, updates: Partial<ApiKeyPoolEntry>): ApiKeyPoolEntry {
+    const existing = this.activeKeysCache.get(keyId);
+    if (existing) {
+      const merged = { ...existing, ...updates };
+      this.activeKeysCache.set(keyId, merged);
+    }
     if (this.pgStore) {
       this.pgStore.updateKey(keyId, updates).catch(() => {});
     }
@@ -238,6 +374,7 @@ export class ApiKeyPoolManager {
   }
 
   public removePoolKey(keyId: string): boolean {
+    this.activeKeysCache.delete(keyId);
     if (this.pgStore) {
       this.pgStore.deleteKey(keyId).catch(() => {});
     }

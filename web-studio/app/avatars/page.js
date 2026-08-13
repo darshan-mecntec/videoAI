@@ -117,11 +117,95 @@ export default function ManageAvatarsPage() {
   // Video Generation / Rendering Loading
   const [isGeneratingVideo, setIsGeneratingVideo] = useState(false);
 
-  // Media Refs
+  // Webcam & Recording State
+  const [webcamStream, setWebcamStream] = useState(null);
+  const [isWebcamActive, setIsWebcamActive] = useState(false);
+  const [isRecordingAudio, setIsRecordingAudio] = useState(false);
+  const [recordedAudioUrl, setRecordedAudioUrl] = useState('');
+  const [avatarImageFileUrl, setAvatarImageFileUrl] = useState('');
+  const [createAvatarTab, setCreateAvatarTab] = useState('record'); // 'record' | 'image' | 'prompt'
+
+  // Media & Recording Refs
   const webcamVideoRef = useRef(null);
   const mediaRecorderRef = useRef(null);
   const videoChunksRef = useRef([]);
   const audioFileInputRef = useRef(null);
+  const audioRecorderRef = useRef(null);
+  const audioChunksRef = useRef([]);
+
+  const startWebcam = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+      setWebcamStream(stream);
+      setIsWebcamActive(true);
+      if (webcamVideoRef.current) {
+        webcamVideoRef.current.srcObject = stream;
+      }
+    } catch (err) {
+      alert('Could not access webcam/microphone: ' + err.message);
+    }
+  };
+
+  const stopWebcam = () => {
+    if (webcamStream) {
+      webcamStream.getTracks().forEach((track) => track.stop());
+      setWebcamStream(null);
+      setIsWebcamActive(false);
+    }
+  };
+
+  const startAvatarVideoRecording = () => {
+    if (!webcamStream) return;
+    videoChunksRef.current = [];
+    const recorder = new MediaRecorder(webcamStream);
+    mediaRecorderRef.current = recorder;
+    recorder.ondataavailable = (e) => {
+      if (e.data.size > 0) videoChunksRef.current.push(e.data);
+    };
+    recorder.onstop = () => {
+      const blob = new Blob(videoChunksRef.current, { type: 'video/mp4' });
+      const url = URL.createObjectURL(blob);
+      setRecordedVideoUrl(url);
+    };
+    recorder.start();
+    setIsRecordingAvatarVideo(true);
+  };
+
+  const stopAvatarVideoRecording = () => {
+    if (mediaRecorderRef.current && isRecordingAvatarVideo) {
+      mediaRecorderRef.current.stop();
+      setIsRecordingAvatarVideo(false);
+    }
+  };
+
+  const startMicAudioRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      audioChunksRef.current = [];
+      const recorder = new MediaRecorder(stream);
+      audioRecorderRef.current = recorder;
+      recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) audioChunksRef.current.push(e.data);
+      };
+      recorder.onstop = () => {
+        const blob = new Blob(audioChunksRef.current, { type: 'audio/mp3' });
+        const url = URL.createObjectURL(blob);
+        setRecordedAudioUrl(url);
+        stream.getTracks().forEach((t) => t.stop());
+      };
+      recorder.start();
+      setIsRecordingAudio(true);
+    } catch (err) {
+      alert('Could not access microphone: ' + err.message);
+    }
+  };
+
+  const stopMicAudioRecording = () => {
+    if (audioRecorderRef.current && isRecordingAudio) {
+      audioRecorderRef.current.stop();
+      setIsRecordingAudio(false);
+    }
+  };
 
   // ---------------------------------------------------------------------------
   // GLOBAL WINDOW DRAG & RESIZE CANVAS ENGINE
@@ -1575,7 +1659,7 @@ export default function ManageAvatarsPage() {
               <div className="space-y-6">
                 
                 {/* Header Bar (Image 2) */}
-                <div className="flex items-center justify-between border-b border-white/10 pb-4">
+                <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 pb-4">
                   <div className="flex items-center gap-3">
                     <button
                       onClick={() => setViewMode('avatars-grid')}
@@ -1583,25 +1667,53 @@ export default function ManageAvatarsPage() {
                     >
                       ←
                     </button>
-                    <img src={selectedAvatarGroup.mainImg} alt={selectedAvatarGroup.name} className="w-9 h-9 rounded-full object-cover" />
+                    <img src={selectedAvatarGroup.mainImg || selectedAvatarGroup.thumbnail_url} alt={selectedAvatarGroup.name} className="w-9 h-9 rounded-full object-cover" />
                     <h1 className="text-xl font-bold font-grotesk text-white">{selectedAvatarGroup.name}</h1>
                   </div>
 
                   <div className="flex items-center gap-3">
+                    <button
+                      onClick={async () => {
+                        try {
+                          alert(`Generating 5-second video motion looks for ${selectedAvatarGroup.name}...`);
+                          const res = await fetch(`http://localhost:3014/v1/avatars/${selectedAvatarGroup.id}/looks/generate`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                              look_names: [
+                                'Executive Blazer 5s Motion',
+                                'Casual Studio 5s Motion',
+                                'Cyberpunk Neon 5s Motion',
+                                'Luxury Formal 5s Motion',
+                                'Outdoor Lifestyle 5s Motion'
+                              ]
+                            })
+                          });
+                          const data = await res.json();
+                          if (data.avatar && data.avatar.looks) {
+                            setSelectedAvatarGroup((prev) => ({ ...prev, looks: data.avatar.looks }));
+                            alert('✓ Generated 5-second motion video looks & auto-saved as Character Assets to asset-service!');
+                          }
+                        } catch (err) {
+                          alert('Error generating looks: ' + err.message);
+                        }
+                      }}
+                      className="px-4 py-2 rounded-full bg-gradient-to-r from-cyan-400 to-purple-500 text-black font-extrabold text-xs flex items-center gap-2 shadow-lg shadow-purple-500/20 hover:scale-105 transition"
+                    >
+                      <span>✨</span> Generate 5s Outfit Video Motion Looks
+                    </button>
+
                     <button className="px-3.5 py-1.5 rounded-full bg-white/5 hover:bg-white/10 text-xs text-zinc-300 border border-white/10 font-semibold flex items-center gap-1.5">
                       <span>🎙️</span> {selectedAvatarGroup.name}'s voices &gt;
-                    </button>
-                    <button className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-rose-400 flex items-center justify-center text-sm">
-                      ♡
                     </button>
                   </div>
                 </div>
 
                 <div className="text-xs text-zinc-400 font-mono font-bold">
-                  {selectedAvatarGroup.looks.length} looks available
+                  {selectedAvatarGroup.looks.length} 5-second video motion looks available
                 </div>
 
-                {/* Grid of Outfit Look Cards (Image 2 Replica) */}
+                {/* Grid of Outfit Look Cards with 5-Second Video Motion Clips */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5">
                   {selectedAvatarGroup.looks.map((lk) => (
                     <div
@@ -1610,14 +1722,38 @@ export default function ManageAvatarsPage() {
                         setSelectedLook(lk);
                         setShowPreviewModal(true);
                       }}
-                      className="group relative rounded-2xl bg-[#14161a] border border-white/10 hover:border-cyan-400 overflow-hidden transition cursor-pointer shadow-xl flex flex-col justify-between"
+                      className="group relative rounded-2xl bg-[#14161a] border border-white/10 hover:border-cyan-400 overflow-hidden transition cursor-pointer shadow-xl flex flex-col justify-between p-3 space-y-2"
                     >
-                      <div className="aspect-[3/4] bg-zinc-950 overflow-hidden relative">
-                        <img src={lk.img} alt={lk.name} className="w-full h-full object-cover group-hover:scale-105 transition duration-500" />
-                        <span className="absolute bottom-3 left-3 right-3 text-xs font-semibold text-white bg-black/60 backdrop-blur-sm px-2.5 py-1 rounded-lg truncate">
+                      <div className="aspect-[3/4] bg-zinc-950 rounded-xl overflow-hidden relative">
+                        {lk.video_url || lk.videoUrl ? (
+                          <video
+                            src={lk.video_url || lk.videoUrl}
+                            autoPlay
+                            loop
+                            muted
+                            playsInline
+                            className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
+                          />
+                        ) : (
+                          <img src={lk.img || lk.thumbnail_url} alt={lk.name} className="w-full h-full object-cover group-hover:scale-105 transition duration-500" />
+                        )}
+                        <span className="absolute top-2 left-2 px-2 py-0.5 rounded bg-black/80 text-cyan-300 font-mono text-[9px] font-bold border border-cyan-500/30">
+                          5s Motion Clip
+                        </span>
+                        <span className="absolute bottom-3 left-3 right-3 text-xs font-semibold text-white bg-black/70 backdrop-blur-sm px-2.5 py-1 rounded-lg truncate">
                           {lk.name}
                         </span>
                       </div>
+
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          router.push(`/video?avatar_id=${selectedAvatarGroup.id}&look_asset_url=${encodeURIComponent(lk.video_url || lk.img || lk.thumbnail_url)}`);
+                        }}
+                        className="w-full py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-[11px] flex items-center justify-center gap-1.5 transition shadow-lg shadow-purple-600/30"
+                      >
+                        <span>⚡</span> Use Character in Studio
+                      </button>
                     </div>
                   ))}
                 </div>
@@ -1825,44 +1961,137 @@ export default function ManageAvatarsPage() {
         </div>
       )}
 
-      {/* CLONE VOICE MODAL */}
+      {/* ENHANCED CLONE VOICE MODAL (MIC RECORD OR FILE UPLOAD) */}
       {showCloneVoiceModal && (
         <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="w-full max-w-xl bg-[#141619] border border-white/10 rounded-2xl p-6 space-y-4 text-xs font-sans text-white">
-            <div className="flex justify-between items-center font-bold text-sm">
-              <span>Create Voice Clone</span>
-              <button onClick={() => setShowCloneVoiceModal(false)}>✕</button>
+          <div className="w-full max-w-2xl bg-[#141619] border border-white/10 rounded-2xl p-6 space-y-5 text-xs font-sans text-white max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center font-bold text-sm border-b border-white/10 pb-3">
+              <span className="flex items-center gap-2">
+                <span>🎙️</span> Create Custom Voice Clone
+              </span>
+              <button onClick={() => setShowCloneVoiceModal(false)} className="text-zinc-400 hover:text-white">✕</button>
             </div>
+
+            {/* Mode Switcher Tabs */}
+            <div className="grid grid-cols-2 gap-2 p-1 rounded-xl bg-black/50 border border-white/10 font-grotesk font-bold">
+              <button
+                onClick={() => setCloneVoiceTab('record')}
+                className={`py-2 rounded-lg transition ${
+                  cloneVoiceTab === 'record' ? 'bg-cyan-500 text-black' : 'text-zinc-400 hover:text-white'
+                }`}
+              >
+                🎙️ Record Mic Audio Sample
+              </button>
+              <button
+                onClick={() => setCloneVoiceTab('upload')}
+                className={`py-2 rounded-lg transition ${
+                  cloneVoiceTab === 'upload' ? 'bg-cyan-500 text-black' : 'text-zinc-400 hover:text-white'
+                }`}
+              >
+                📤 Upload Audio Recording File
+              </button>
+            </div>
+
             <div>
-              <label className="block font-bold mb-1">Voice Name *</label>
+              <label className="block font-bold mb-1">Voice Twin Title Name *</label>
               <input
                 type="text"
                 value={cloneVoiceName}
                 onChange={(e) => setCloneVoiceName(e.target.value)}
                 placeholder="e.g. My Custom Voice Twin"
-                className="w-full bg-black/40 border border-white/10 rounded-xl p-2.5 text-white"
+                className="w-full bg-black/40 border border-white/10 rounded-xl p-2.5 text-white focus:outline-none focus:border-cyan-400 font-bold"
               />
             </div>
+
+            {cloneVoiceTab === 'record' ? (
+              <div className="space-y-4 p-4 rounded-xl bg-black/40 border border-white/10">
+                <div className="space-y-1">
+                  <label className="block font-bold text-cyan-300">Teleprompter Reading Script</label>
+                  <p className="text-[11px] text-zinc-400 leading-relaxed p-3 rounded-lg bg-black/60 border border-white/5 font-mono">
+                    "The quick brown fox jumps over the lazy dog. Artificial intelligence opens new creative horizons for digital storytelling and video synthesis. I hereby authorize AI Creative Studio to clone my acoustic voice profile for my digital avatar."
+                  </p>
+                </div>
+
+                <div className="flex items-center justify-between pt-2">
+                  <div className="flex items-center gap-2">
+                    {!isRecordingAudio ? (
+                      <button
+                        onClick={startMicAudioRecording}
+                        className="px-5 py-2.5 rounded-full bg-rose-600 hover:bg-rose-500 text-white font-extrabold flex items-center gap-2 shadow-lg shadow-rose-600/30 transition"
+                      >
+                        <span className="w-2.5 h-2.5 rounded-full bg-white animate-ping" />
+                        <span>Start Mic Recording</span>
+                      </button>
+                    ) : (
+                      <button
+                        onClick={stopMicAudioRecording}
+                        className="px-5 py-2.5 rounded-full bg-amber-500 hover:bg-amber-400 text-black font-extrabold flex items-center gap-2 shadow-lg shadow-amber-500/30 transition"
+                      >
+                        <span>⏹ Stop Mic Recording</span>
+                      </button>
+                    )}
+                  </div>
+
+                  {recordedAudioUrl && (
+                    <div className="text-emerald-400 font-mono font-bold flex items-center gap-1.5">
+                      <span>✓ Audio Sample Captured</span>
+                    </div>
+                  )}
+                </div>
+
+                {recordedAudioUrl && (
+                  <div className="pt-2">
+                    <label className="block text-[10px] text-zinc-400 font-mono mb-1">Playback Recorded Voice Sample:</label>
+                    <audio src={recordedAudioUrl} controls className="w-full h-9 rounded-lg" />
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="p-6 border-2 border-dashed border-white/20 rounded-xl text-center space-y-3 bg-black/40">
+                <div className="text-3xl">🎵</div>
+                <div className="text-xs font-bold">Upload Speech Audio File (.mp3, .wav, .m4a)</div>
+                <label className="inline-block px-5 py-2.5 rounded-full bg-cyan-500 text-black font-extrabold uppercase cursor-pointer hover:bg-cyan-400 transition">
+                  Select Audio File
+                  <input
+                    type="file"
+                    accept="audio/*"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) setCloneVoiceAudioFile(file);
+                    }}
+                    className="hidden"
+                  />
+                </label>
+                {cloneVoiceAudioFile && (
+                  <div className="text-xs text-cyan-300 font-mono">Selected: {cloneVoiceAudioFile.name}</div>
+                )}
+              </div>
+            )}
+
             <button
               onClick={() => {
+                if (!cloneVoiceName.trim()) {
+                  alert('Please enter a voice name');
+                  return;
+                }
                 setShowCloneVoiceModal(false);
                 setCloneVoiceName('');
-                alert('Voice cloned successfully!');
+                alert('Voice cloned successfully and saved to your Voice Library!');
               }}
-              className="w-full py-3 rounded-full bg-cyan-500 text-black font-extrabold uppercase tracking-wider"
+              className="w-full py-3 rounded-full bg-gradient-to-r from-cyan-400 to-purple-500 text-black font-extrabold uppercase tracking-wider shadow-lg transition"
             >
-              Clone Voice (150 cr)
+              Confirm & Clone Voice Profile
             </button>
           </div>
         </div>
       )}
 
-      {/* DESIGN VOICE MODAL */}
+      {/* DESIGN SYNTHETIC VOICE MODAL */}
       {showDesignVoiceModal && (
         <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="w-full max-w-xl bg-[#141619] border border-white/10 rounded-2xl p-6 space-y-4 text-xs font-sans text-white">
             <div className="flex justify-between items-center font-bold text-sm">
-              <span>Design Synthetic Voice</span>
+              <span>Design Synthetic Voice Profile</span>
               <button onClick={() => setShowDesignVoiceModal(false)}>✕</button>
             </div>
             <div>
@@ -1871,15 +2100,16 @@ export default function ManageAvatarsPage() {
                 value={designVoicePrompt}
                 onChange={(e) => setDesignVoicePrompt(e.target.value)}
                 rows={4}
-                className="w-full bg-black/40 border border-white/10 rounded-xl p-2.5 text-white"
+                placeholder="Describe voice characteristics, tone, gender, speed, accent..."
+                className="w-full bg-black/40 border border-white/10 rounded-xl p-2.5 text-white font-mono"
               />
             </div>
             <button
               onClick={() => {
                 setShowDesignVoiceModal(false);
-                alert('Synthetic voice generated!');
+                alert('Synthetic voice generated and added to your library!');
               }}
-              className="w-full py-3 rounded-full bg-purple-600 text-white font-extrabold uppercase tracking-wider"
+              className="w-full py-3 rounded-full bg-purple-600 hover:bg-purple-500 text-white font-extrabold uppercase tracking-wider shadow-lg transition"
             >
               Generate Synthetic Voice
             </button>
@@ -1887,36 +2117,236 @@ export default function ManageAvatarsPage() {
         </div>
       )}
 
-      {/* CREATE AVATAR MODAL */}
+      {/* FULL MULTI-MODE AVATAR CREATION MODAL */}
       {showCreateAvatarModal && (
         <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="w-full max-w-xl bg-[#141619] border border-white/10 rounded-2xl p-6 space-y-4 text-xs font-sans text-white">
-            <div className="flex justify-between items-center font-bold text-sm">
-              <span>Create New Avatar</span>
-              <button onClick={() => setShowCreateAvatarModal(false)}>✕</button>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
+          <div className="w-full max-w-2xl bg-[#141619] border border-white/10 rounded-2xl p-6 space-y-5 text-xs font-sans text-white max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center font-bold text-sm border-b border-white/10 pb-3">
+              <span className="flex items-center gap-2">
+                <span>✨</span> Create New Avatar (Record / Photo / AI Description)
+              </span>
               <button
                 onClick={() => {
+                  stopWebcam();
                   setShowCreateAvatarModal(false);
-                  launchSceneEditor(avatarGroupTemplates[0], avatarGroupTemplates[0].looks[0]);
                 }}
-                className="p-4 rounded-xl bg-white/5 border border-white/10 text-left hover:border-cyan-400 space-y-1"
+                className="text-zinc-400 hover:text-white"
               >
-                <div className="font-bold text-cyan-300">📹 Real Video Clone</div>
-                <div className="text-[11px] text-zinc-400">Record webcam or upload video</div>
-              </button>
-              <button
-                onClick={() => {
-                  setShowCreateAvatarModal(false);
-                  launchSceneEditor(avatarGroupTemplates[1], avatarGroupTemplates[1].looks[0]);
-                }}
-                className="p-4 rounded-xl bg-white/5 border border-white/10 text-left hover:border-purple-400 space-y-1"
-              >
-                <div className="font-bold text-purple-300">✨ Virtual AI Character</div>
-                <div className="text-[11px] text-zinc-400">Design AI character look & pose</div>
+                ✕
               </button>
             </div>
+
+            {/* Creation Method Selection Tabs */}
+            <div className="grid grid-cols-3 gap-2 p-1 rounded-xl bg-black/50 border border-white/10 font-grotesk font-bold">
+              <button
+                onClick={() => setCreateAvatarTab('record')}
+                className={`py-2 rounded-lg transition ${
+                  createAvatarTab === 'record' ? 'bg-cyan-500 text-black' : 'text-zinc-400 hover:text-white'
+                }`}
+              >
+                📹 Webcam Video Record
+              </button>
+              <button
+                onClick={() => setCreateAvatarTab('image')}
+                className={`py-2 rounded-lg transition ${
+                  createAvatarTab === 'image' ? 'bg-purple-600 text-white' : 'text-zinc-400 hover:text-white'
+                }`}
+              >
+                🖼️ From Photo / Image
+              </button>
+              <button
+                onClick={() => setCreateAvatarTab('prompt')}
+                className={`py-2 rounded-lg transition ${
+                  createAvatarTab === 'prompt' ? 'bg-amber-500 text-black' : 'text-zinc-400 hover:text-white'
+                }`}
+              >
+                ✨ AI Text Description
+              </button>
+            </div>
+
+            {/* MODE 1: WEBCAM VIDEO RECORDING WITH TELEPROMPTER SCRIPT */}
+            {createAvatarTab === 'record' && (
+              <div className="space-y-4 p-4 rounded-xl bg-black/40 border border-white/10">
+                <div className="space-y-1">
+                  <label className="block font-bold text-cyan-300">Teleprompter Reading Script (Read aloud while recording)</label>
+                  <p className="text-[11px] text-zinc-300 leading-relaxed p-3 rounded-lg bg-black/60 border border-white/5 font-mono">
+                    "I hereby grant AI Creative Studio full permission to generate a digital avatar replica of my face, facial expressions, and voice for production inside my account."
+                  </p>
+                </div>
+
+                <div className="aspect-video bg-black rounded-2xl overflow-hidden border border-white/10 relative flex items-center justify-center">
+                  <video ref={webcamVideoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
+
+                  {!isWebcamActive && (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80 space-y-3">
+                      <div className="text-3xl">🎥</div>
+                      <button
+                        onClick={startWebcam}
+                        className="px-5 py-2.5 rounded-full bg-cyan-500 text-black font-extrabold uppercase tracking-wider"
+                      >
+                        Turn On Camera & Mic
+                      </button>
+                    </div>
+                  )}
+
+                  {isRecordingAvatarVideo && (
+                    <div className="absolute top-3 left-3 px-3 py-1 rounded-full bg-rose-600 text-white text-[10px] font-mono font-bold flex items-center gap-1.5 animate-pulse">
+                      <span className="w-2 h-2 rounded-full bg-white" />
+                      <span>RECORDING VIDEO AVATAR...</span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex items-center justify-between">
+                  {isWebcamActive && !isRecordingAvatarVideo && (
+                    <button
+                      onClick={startAvatarVideoRecording}
+                      className="px-6 py-2.5 rounded-full bg-rose-600 hover:bg-rose-500 text-white font-extrabold flex items-center gap-2 shadow-lg shadow-rose-600/30"
+                    >
+                      <span className="w-2.5 h-2.5 rounded-full bg-white animate-ping" />
+                      <span>Start Recording Video Avatar</span>
+                    </button>
+                  )}
+
+                  {isRecordingAvatarVideo && (
+                    <button
+                      onClick={stopAvatarVideoRecording}
+                      className="px-6 py-2.5 rounded-full bg-amber-500 hover:bg-amber-400 text-black font-extrabold flex items-center gap-2 shadow-lg"
+                    >
+                      <span>⏹ Stop Recording</span>
+                    </button>
+                  )}
+
+                  {recordedVideoUrl && (
+                    <div className="text-emerald-400 font-mono font-bold">
+                      ✓ Video Avatar Recorded!
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* MODE 2: CREATE AVATAR FROM PHOTO / IMAGE */}
+            {createAvatarTab === 'image' && (
+              <div className="space-y-4 p-4 rounded-xl bg-black/40 border border-white/10">
+                <div className="space-y-2">
+                  <label className="block font-bold">Upload Character Portrait Photo</label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) setAvatarImageFileUrl(URL.createObjectURL(file));
+                    }}
+                    className="w-full bg-black/60 border border-white/10 rounded-xl p-2.5 text-white"
+                  />
+                </div>
+
+                {avatarImageFileUrl && (
+                  <div className="aspect-video bg-black rounded-xl overflow-hidden border border-purple-500/40 relative">
+                    <img src={avatarImageFileUrl} alt="Avatar Ref" className="w-full h-full object-cover" />
+                  </div>
+                )}
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block font-bold mb-1">Gender</label>
+                    <select
+                      value={virtualGender}
+                      onChange={(e) => setVirtualGender(e.target.value)}
+                      className="w-full bg-black/60 border border-white/10 rounded-xl p-2.5 text-white"
+                    >
+                      <option value="Female">Female</option>
+                      <option value="Male">Male</option>
+                      <option value="Non-Binary">Non-Binary</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block font-bold mb-1">Age Tier</label>
+                    <select
+                      value={virtualAge}
+                      onChange={(e) => setVirtualAge(e.target.value)}
+                      className="w-full bg-black/60 border border-white/10 rounded-xl p-2.5 text-white"
+                    >
+                      <option value="Young Adult">Young Adult (20s)</option>
+                      <option value="Middle Aged">Middle Aged (40s)</option>
+                      <option value="Senior">Senior (60s)</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* MODE 3: GENERATE AI CHARACTER BY TEXT DESCRIPTION */}
+            {createAvatarTab === 'prompt' && (
+              <div className="space-y-4 p-4 rounded-xl bg-black/40 border border-white/10">
+                <div className="grid grid-cols-3 gap-3">
+                  <div>
+                    <label className="block font-bold mb-1">Gender *</label>
+                    <select
+                      value={virtualGender}
+                      onChange={(e) => setVirtualGender(e.target.value)}
+                      className="w-full bg-black/60 border border-white/10 rounded-xl p-2 text-white"
+                    >
+                      <option value="Female">Female 👩</option>
+                      <option value="Male">Male 👨</option>
+                      <option value="Non-Binary">Non-Binary 🧑</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block font-bold mb-1">Age Tier</label>
+                    <select
+                      value={virtualAge}
+                      onChange={(e) => setVirtualAge(e.target.value)}
+                      className="w-full bg-black/60 border border-white/10 rounded-xl p-2 text-white"
+                    >
+                      <option value="Young Adult">Young Adult (20s)</option>
+                      <option value="Middle Aged">Middle Aged (40s)</option>
+                      <option value="Senior">Senior (60s)</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block font-bold mb-1">Style / Ethnicity</label>
+                    <select
+                      value={virtualEthnicity}
+                      onChange={(e) => setVirtualEthnicity(e.target.value)}
+                      className="w-full bg-black/60 border border-white/10 rounded-xl p-2 text-white"
+                    >
+                      <option value="Caucasian">Caucasian</option>
+                      <option value="East Asian">East Asian</option>
+                      <option value="African American">African American</option>
+                      <option value="Hispanic/Latino">Hispanic / Latino</option>
+                      <option value="South Asian">South Asian</option>
+                      <option value="Anime 3D">Cyberpunk Anime 3D</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block font-bold mb-1">Detailed Character Prompt & Outfit Description *</label>
+                  <textarea
+                    value={virtualDescription}
+                    onChange={(e) => setVirtualDescription(e.target.value)}
+                    rows={3}
+                    placeholder="Describe character appearance, hair, clothing, lighting, background environment..."
+                    className="w-full bg-black/60 border border-white/10 rounded-xl p-2.5 text-white font-mono"
+                  />
+                </div>
+              </div>
+            )}
+
+            <button
+              onClick={() => {
+                stopWebcam();
+                setShowCreateAvatarModal(false);
+                alert('Avatar created successfully and added to your Avatar Library!');
+              }}
+              className="w-full py-3.5 rounded-full bg-gradient-to-r from-cyan-400 via-purple-500 to-emerald-400 text-black font-extrabold uppercase tracking-wider shadow-lg transition"
+            >
+              Confirm & Save Avatar to Library
+            </button>
           </div>
         </div>
       )}

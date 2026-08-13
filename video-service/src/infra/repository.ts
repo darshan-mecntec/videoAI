@@ -40,3 +40,69 @@ export class InMemoryVideoJobRepository implements VideoJobRepository {
     return all.filter(j => j.request.org_id === orgId);
   }
 }
+
+import fs from 'fs';
+import path from 'path';
+
+export class JsonFileVideoJobRepository implements VideoJobRepository {
+  private filePath: string;
+
+  constructor(customPath?: string) {
+    this.filePath = customPath || path.join(__dirname, '../../data/jobs.json');
+    this.ensureFileExists();
+  }
+
+  private ensureFileExists(): void {
+    const dir = path.dirname(this.filePath);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    if (!fs.existsSync(this.filePath)) {
+      fs.writeFileSync(this.filePath, JSON.stringify({ jobs: {} }, null, 2), 'utf-8');
+    }
+  }
+
+  private readData(): Record<string, VideoJob> {
+    this.ensureFileExists();
+    try {
+      const raw = fs.readFileSync(this.filePath, 'utf-8');
+      const parsed = JSON.parse(raw);
+      return parsed.jobs || {};
+    } catch {
+      return {};
+    }
+  }
+
+  private writeData(jobs: Record<string, VideoJob>): void {
+    fs.writeFileSync(this.filePath, JSON.stringify({ jobs }, null, 2), 'utf-8');
+  }
+
+  async saveJob(job: VideoJob): Promise<VideoJob> {
+    const data = this.readData();
+    data[job.id] = job;
+    this.writeData(data);
+    return job;
+  }
+
+  async findJobById(id: string): Promise<VideoJob | null> {
+    const data = this.readData();
+    return data[id] || null;
+  }
+
+  async updateJob(id: string, update: Partial<VideoJob>): Promise<VideoJob> {
+    const data = this.readData();
+    if (!data[id]) {
+      throw new Error(`Job '${id}' not found`);
+    }
+    data[id] = { ...data[id], ...update, updated_at: new Date().toISOString() };
+    this.writeData(data);
+    return data[id];
+  }
+
+  async listJobs(orgId?: string): Promise<VideoJob[]> {
+    const data = this.readData();
+    const all = Object.values(data);
+    if (!orgId) return all;
+    return all.filter(j => j.request.org_id === orgId);
+  }
+}

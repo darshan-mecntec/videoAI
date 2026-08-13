@@ -15,6 +15,7 @@
     "express": "^4.19.2",
     "form-data": "^4.0.0",
     "node-fetch": "^3.3.2",
+    "pg": "^8.23.0",
     "uuid": "^9.0.1"
   },
   "devDependencies": {
@@ -22,6 +23,7 @@
     "@types/express": "^4.17.21",
     "@types/jest": "^29.5.12",
     "@types/node": "^20.12.7",
+    "@types/pg": "^8.21.0",
     "@types/supertest": "^6.0.2",
     "@types/uuid": "^9.0.8",
     "jest": "^29.7.0",

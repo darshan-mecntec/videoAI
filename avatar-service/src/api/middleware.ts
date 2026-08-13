@@ -22,8 +22,8 @@ export function createAuthMiddleware() {
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       // Default fallback for guest/dev requests
       req.userToken = {
-        sub: (req.query.user_id as string) || (req.body?.user_id as string) || 'usr-1c94e86b',
-        email: 'owner@studio.com',
+        sub: (req.query.user_id as string) || (req.body?.user_id as string) || 'usr-admin-1',
+        email: 'admin@aether.ai',
         org_id: 'org-main-1',
         role: 'super_admin',
         permissions: ['credits:view', 'video:generate', 'credits:manage'],

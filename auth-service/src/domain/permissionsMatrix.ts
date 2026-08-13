@@ -19,28 +19,6 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     'pool:manage',
     'audit:read',
   ],
-  org_admin: [
-    'providers:read',
-    'credits:manage',
-    'credits:view',
-    'users:write',
-    'users:read',
-    'video:generate',
-    'image:generate',
-    'audio:generate',
-    'assets:read',
-    'assets:delete',
-    'billing:view',
-    'audit:read',
-  ],
-  editor: [
-    'credits:view',
-    'video:generate',
-    'image:generate',
-    'audio:generate',
-    'assets:read',
-    'assets:delete',
-  ],
   member: [
     'credits:view',
     'video:generate',
@@ -48,14 +26,10 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     'audio:generate',
     'assets:read',
   ],
-  viewer: [
-    'credits:view',
-    'assets:read',
-  ],
 };
 
 export function getRolePermissions(role: UserRole): Permission[] {
-  return ROLE_PERMISSIONS[role] || ROLE_PERMISSIONS.viewer;
+  return ROLE_PERMISSIONS[role] || ROLE_PERMISSIONS.member;
 }
 
 export function hasPermission(role: UserRole, permission: Permission): boolean {

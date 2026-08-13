@@ -1,0 +1,66 @@
+{
+  "assets": {
+    "asset-video-demo-1": {
+      "id": "asset-video-demo-1",
+      "project_id": "proj-default",
+      "user_id": "usr-1c94e86b",
+      "org_id": "org-main-1",
+      "name": "CyberTech AI Commercial Teaser",
+      "type": "video",
+      "url": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+      "thumbnail_url": "https://images.unsplash.com/photo-1536240478700-b869070f9279?w=500",
+      "starred": true,
+      "prompt": "Cinematic commercial teaser for CyberTech AI, hyperrealistic 3d render",
+      "credits": 100,
+      "metadata": {
+        "resolution": "1920x1080",
+        "duration_sec": 15,
+        "fps": 30,
+        "mime_type": "video/mp4",
+        "file_size_bytes": 15420000,
+        "prompt_used": "Cinematic commercial teaser for CyberTech AI, hyperrealistic 3d render",
+        "provider_id": "provider-runway-gen2",
+        "model_id": "gen-2"
+      },
+      "created_at": "2026-08-13T07:18:18.916Z"
+    },
+    "asset-image-demo-1": {
+      "id": "asset-image-demo-1",
+      "project_id": "proj-default",
+      "user_id": "usr-1c94e86b",
+      "org_id": "org-main-1",
+      "name": "Luxury Wireless Headphones 4K",
+      "type": "image",
+      "url": "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=1200",
+      "thumbnail_url": "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500",
+      "starred": true,
+      "prompt": "Studio product photo of Luxury Wireless Headphones on marble pedestal, 8k",
+      "credits": 15,
+      "metadata": {
+        "resolution": "3840x2160",
+        "mime_type": "image/png",
+        "file_size_bytes": 4200000,
+        "prompt_used": "Studio product photo of Luxury Wireless Headphones on marble pedestal, 8k",
+        "provider_id": "provider-openai-dalle3",
+        "model_id": "dall-e-3"
+      },
+      "created_at": "2026-08-13T07:18:18.916Z"
+    },
+    "043d86c4-02ed-43d4-8209-3c63adbd48c5": {
+      "id": "043d86c4-02ed-43d4-8209-3c63adbd48c5",
+      "project_id": "proj-default",
+      "name": "AI Image - Editorial fashion portrait in ...",
+      "type": "image",
+      "url": "https://images.unsplash.com/photo-1519501025264-65ba15a82390?w=1200&auto=format&fit=crop&q=80",
+      "thumbnail_url": "https://images.unsplash.com/photo-1519501025264-65ba15a82390?w=1200&auto=format&fit=crop&q=80",
+      "starred": false,
+      "prompt": "",
+      "credits": 15,
+      "metadata": {
+        "prompt": "Editorial fashion portrait in a neon rain-slicked Cyberpunk Tokyo street, 8k resolution",
+        "provider": "nano-pro"
+      },
+      "created_at": "2026-08-13T10:07:15.370Z"
+    }
+  }
+}

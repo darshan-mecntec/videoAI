@@ -4,9 +4,7 @@ const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL && !process.env.NEXT_PUBLI
 const ASSET_API_URL = process.env.NEXT_PUBLIC_ASSET_API_URL || 'http://localhost:3006';
 const AUTH_API_URL = process.env.NEXT_PUBLIC_AUTH_API_URL || 'http://localhost:3008';
 const PROJECT_API_URL = process.env.NEXT_PUBLIC_PROJECT_API_URL || 'http://localhost:3009';
-const METRICS_API_URL = process.env.NEXT_PUBLIC_METRICS_API_URL || 'http://localhost:3010';
 const VIDEO_API_URL = process.env.NEXT_PUBLIC_VIDEO_API_URL || 'http://localhost:3011';
-const VIDEO_EDITOR_API_URL = process.env.NEXT_PUBLIC_VIDEO_EDITOR_API_URL || 'http://localhost:3012';
 const AVATAR_API_URL = process.env.NEXT_PUBLIC_AVATAR_API_URL || 'http://localhost:3014';
 
 class ApiClient {
@@ -179,155 +177,6 @@ class ApiClient {
     });
   }
 
-  // Workflow Engine endpoints
-  async getWorkflows(options = {}) {
-    const params = new URLSearchParams();
-    if (options.project_id) params.append('project_id', options.project_id);
-    if (options.limit) params.append('limit', options.limit);
-    if (options.cursor) params.append('cursor', options.cursor);
-
-    const response = await fetch(`${WORKFLOW_API_URL}/v1/workflows?${params.toString()}`);
-    if (!response.ok) {
-      const err = await response.json();
-      throw new Error(err.error?.message || 'Failed to fetch workflows');
-    }
-    return response.json();
-  }
-
-  async createWorkflow(data) {
-    const response = await fetch(`${WORKFLOW_API_URL}/v1/workflows`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    });
-    if (!response.ok) {
-      const err = await response.json();
-      throw new Error(err.error?.message || 'Failed to create workflow');
-    }
-    return response.json();
-  }
-
-  async runWorkflow(id, data = {}) {
-    const response = await fetch(`${WORKFLOW_API_URL}/v1/workflows/${id}/run`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    });
-    if (!response.ok) {
-      const err = await response.json();
-      throw new Error(err.error?.message || 'Failed to run workflow');
-    }
-    return response.json();
-  }
-
-  async getWorkflowRun(runId) {
-    const response = await fetch(`${WORKFLOW_API_URL}/v1/workflows/runs/${runId}`);
-    if (!response.ok) {
-      const err = await response.json();
-      throw new Error(err.error?.message || 'Failed to fetch workflow run');
-    }
-    return response.json();
-  }
-
-  // Template Engine & Prompt Engine endpoints
-  async getTemplates(options = {}) {
-    const params = new URLSearchParams();
-    if (options.category) params.append('category', options.category);
-    if (options.modality) params.append('modality', options.modality);
-    if (options.limit) params.append('limit', options.limit);
-    if (options.cursor) params.append('cursor', options.cursor);
-
-    const response = await fetch(`${TEMPLATE_API_URL}/v1/templates?${params.toString()}`);
-    if (!response.ok) {
-      const err = await response.json();
-      throw new Error(err.error?.message || 'Failed to fetch templates');
-    }
-    return response.json();
-  }
-
-  async getTemplate(id) {
-    const response = await fetch(`${TEMPLATE_API_URL}/v1/templates/${id}`);
-    if (!response.ok) {
-      const err = await response.json();
-      throw new Error(err.error?.message || 'Failed to fetch template details');
-    }
-    return response.json();
-  }
-
-  async forkTemplate(id, data = {}) {
-    const response = await fetch(`${TEMPLATE_API_URL}/v1/templates/${id}/fork`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    });
-    if (!response.ok) {
-      const err = await response.json();
-      throw new Error(err.error?.message || 'Failed to fork template');
-    }
-    return response.json();
-  }
-
-  async renderPrompt(data) {
-    const response = await fetch(`${TEMPLATE_API_URL}/v1/prompts/render`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    });
-    if (!response.ok) {
-      const err = await response.json();
-      throw new Error(err.error?.message || 'Failed to render prompt');
-    }
-    return response.json();
-  }
-
-  async lintPrompt(data) {
-    const response = await fetch(`${TEMPLATE_API_URL}/v1/prompts/lint`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    });
-    if (!response.ok) {
-      const err = await response.json();
-      throw new Error(err.error?.message || 'Failed to lint prompt');
-    }
-    return response.json();
-  }
-
-  // Node Engine endpoints
-  async getNodes(options = {}) {
-    const params = new URLSearchParams();
-    if (options.category) params.append('category', options.category);
-
-    const response = await fetch(`${NODE_API_URL}/v1/nodes?${params.toString()}`);
-    if (!response.ok) {
-      const err = await response.json();
-      throw new Error(err.error?.message || 'Failed to fetch nodes');
-    }
-    return response.json();
-  }
-
-  async getNode(type) {
-    const response = await fetch(`${NODE_API_URL}/v1/nodes/${type}`);
-    if (!response.ok) {
-      const err = await response.json();
-      throw new Error(err.error?.message || 'Failed to fetch node details');
-    }
-    return response.json();
-  }
-
-  async validateGraph(data) {
-    const response = await fetch(`${NODE_API_URL}/v1/nodes/validate-graph`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    });
-    if (!response.ok) {
-      const err = await response.json();
-      throw new Error(err.error?.message || 'Failed to validate graph');
-    }
-    return response.json();
-  }
-
   // Asset Service endpoints
   async getAssets(options = {}) {
     const params = new URLSearchParams();
@@ -360,20 +209,6 @@ class ApiClient {
     if (!response.ok) {
       const err = await response.json();
       throw new Error(err.error?.message || 'Failed to create asset');
-    }
-    return response.json();
-  }
-
-  // Execution Engine endpoint
-  async dispatchExecution(data) {
-    const response = await fetch(`${EXECUTION_API_URL}/v1/execution/dispatch`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    });
-    if (!response.ok) {
-      const err = await response.json();
-      throw new Error(err.error?.message || 'Failed to dispatch execution');
     }
     return response.json();
   }
@@ -526,107 +361,7 @@ class ApiClient {
     return response.json();
   }
 
-  // ─── Video Editor Service endpoints (:3012) ──────────────────────────────
 
-  async getExportPresets() {
-    const response = await fetch(`${VIDEO_EDITOR_API_URL}/v1/editor/presets`);
-    if (!response.ok) {
-      const err = await response.json();
-      throw new Error(err.error?.message || 'Failed to fetch export presets');
-    }
-    return response.json();
-  }
-
-  async createTimeline(data) {
-    const response = await fetch(`${VIDEO_EDITOR_API_URL}/v1/editor/timeline`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    });
-    if (!response.ok) {
-      const err = await response.json();
-      throw new Error(err.error?.message || 'Failed to create timeline');
-    }
-    return response.json();
-  }
-
-  async getTimeline(id) {
-    const response = await fetch(`${VIDEO_EDITOR_API_URL}/v1/editor/timeline/${id}`);
-    if (!response.ok) {
-      const err = await response.json();
-      throw new Error(err.error?.message || 'Failed to fetch timeline state');
-    }
-    return response.json();
-  }
-
-  async applyEditOperation(id, operation) {
-    const response = await fetch(`${VIDEO_EDITOR_API_URL}/v1/editor/timeline/${id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(operation),
-    });
-    if (!response.ok) {
-      const err = await response.json();
-      throw new Error(err.error?.message || 'Failed to apply edit operation');
-    }
-    return response.json();
-  }
-
-  async triggerRender(id, preset) {
-    const response = await fetch(`${VIDEO_EDITOR_API_URL}/v1/editor/timeline/${id}/render`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ preset }),
-    });
-    if (!response.ok) {
-      const err = await response.json();
-      throw new Error(err.error?.message || 'Failed to trigger render');
-    }
-    return response.json();
-  }
-
-  async getRenderJob(jobId) {
-    const response = await fetch(`${VIDEO_EDITOR_API_URL}/v1/editor/render/${jobId}`);
-    if (!response.ok) {
-      const err = await response.json();
-      throw new Error(err.error?.message || 'Failed to fetch render job status');
-    }
-    return response.json();
-  }
-
-  // ─── Video Template Service endpoints (:3013) ───────────────────────────
-
-  async getVideoTemplates(category) {
-    const url = category ? `${VIDEO_TEMPLATE_API_URL}/v1/video-templates?category=${category}` : `${VIDEO_TEMPLATE_API_URL}/v1/video-templates`;
-    const response = await fetch(url);
-    if (!response.ok) {
-      const err = await response.json();
-      throw new Error(err.error?.message || 'Failed to fetch video templates');
-    }
-    return response.json();
-  }
-
-  async getVideoTemplate(id) {
-    const response = await fetch(`${VIDEO_TEMPLATE_API_URL}/v1/video-templates/${id}`);
-    if (!response.ok) {
-      const err = await response.json();
-      throw new Error(err.error?.message || 'Failed to fetch video template schema');
-    }
-    return response.json();
-  }
-
-  async generateFromTemplate(id, fieldValues, projectId) {
-    const response = await fetch(`${VIDEO_TEMPLATE_API_URL}/v1/video-templates/${id}/generate`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ field_values: fieldValues, project_id: projectId }),
-    });
-    if (!response.ok) {
-      const err = await response.json();
-      throw new Error(err.error?.message || 'Failed to submit template generation');
-    }
-    return response.json();
-  }
 
   // ─── Project Version Control endpoints (:3009) ───────────────────────────
 
@@ -701,6 +436,53 @@ class ApiClient {
     if (!response.ok) {
       const err = await response.json();
       throw new Error(err.error?.message || 'Failed to fetch audit log');
+    }
+    return response.json();
+  }
+
+  async createInvite(email, role = 'editor', orgId = 'org-cybertech-1') {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('aether_token') : null;
+    const headers = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    const response = await fetch(`${AUTH_API_URL}/v1/auth/invites`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ email, role, org_id: orgId }),
+    });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.error?.message || 'Failed to create invite');
+    }
+    return response.json();
+  }
+
+  async getInvites(orgId = 'org-cybertech-1') {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('aether_token') : null;
+    const headers = {};
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    const response = await fetch(`${AUTH_API_URL}/v1/auth/invites?org_id=${orgId}`, { headers });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.error?.message || 'Failed to fetch invites');
+    }
+    return response.json();
+  }
+
+  async updateOrgConcurrency(orgId = 'org-cybertech-1', maxConcurrentJobs = 5) {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('aether_token') : null;
+    const headers = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    const response = await fetch(`${AUTH_API_URL}/v1/auth/orgs/${orgId}/concurrency`, {
+      method: 'PATCH',
+      headers,
+      body: JSON.stringify({ max_concurrent_jobs: maxConcurrentJobs }),
+    });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.error?.message || 'Failed to update org concurrency limit');
     }
     return response.json();
   }

@@ -11,14 +11,73 @@ export default function TopNav({ onToggleSidebar, sidebarCollapsed }) {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [workspaceMenuOpen, setWorkspaceMenuOpen] = useState(false);
   const [currentWorkspace, setCurrentWorkspace] = useState('Personal Workspace');
+  const [workspaces, setWorkspaces] = useState([
+    { id: 'personal', name: 'Personal Workspace', type: 'Personal', icon: '👤', credits: user?.credits || 1250 },
+  ]);
 
-  const workspaces = [
-    { id: 'personal', name: 'Personal Workspace', type: 'Personal', icon: '👤', credits: 1250 },
-    { id: 'team-ent', name: 'Aether Enterprise Team', type: 'Team Space', icon: '🏢', credits: 50000 },
-    { id: 'client-agency', name: 'Agency Client Hub', type: 'Client Space', icon: '🎨', credits: 8400 },
-  ];
+  useEffect(() => {
+    fetch('http://localhost:3009/v1/projects')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.projects && data.projects.length > 0) {
+          const mapped = data.projects.map((p) => ({
+            id: p.id,
+            name: p.name,
+            type: p.description || 'Project Workspace',
+            icon: '📁',
+            credits: user?.credits || 1250,
+          }));
+          setWorkspaces([
+            { id: 'personal', name: 'Personal Workspace', type: 'Personal', icon: '👤', credits: user?.credits || 1250 },
+            ...mapped,
+          ]);
+        }
+      })
+      .catch(() => {});
+  }, [user]);
 
   const activeWsObj = workspaces.find((w) => w.name === currentWorkspace) || workspaces[0];
+
+  const [createWsModalOpen, setCreateWsModalOpen] = useState(false);
+  const [newWsName, setNewWsName] = useState('');
+  const [newWsDesc, setNewWsDesc] = useState('');
+  const [creatingWs, setCreatingWs] = useState(false);
+
+  const handleCreateWorkspace = async (e) => {
+    e.preventDefault();
+    if (!newWsName.trim()) return;
+    setCreatingWs(true);
+    try {
+      const res = await fetch('http://localhost:3009/v1/projects', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: newWsName.trim(),
+          description: newWsDesc.trim() || 'Custom Workspace',
+          org_id: 'org-cybertech-1',
+        }),
+      });
+      const data = await res.json();
+      if (res.ok && data.project) {
+        const newWs = {
+          id: data.project.id,
+          name: data.project.name,
+          type: data.project.description || 'Custom Workspace',
+          icon: '📁',
+          credits: user?.credits || 1250,
+        };
+        setWorkspaces((prev) => [...prev, newWs]);
+        setCurrentWorkspace(newWs.name);
+        setNewWsName('');
+        setNewWsDesc('');
+        setCreateWsModalOpen(false);
+      }
+    } catch (err) {
+      console.error('Failed to create workspace:', err);
+    } finally {
+      setCreatingWs(false);
+    }
+  };
 
   return (
     <div
@@ -50,7 +109,7 @@ export default function TopNav({ onToggleSidebar, sidebarCollapsed }) {
 
           <div className="h-4 w-px bg-white/10 mx-1 hidden sm:block" />
 
-          {/* Workspace Switcher (HeyGen/Canva/Runway Industry Standard) */}
+          {/* Workspace Switcher */}
           <div className="relative">
             <button
               onClick={() => setWorkspaceMenuOpen(!workspaceMenuOpen)}
@@ -86,15 +145,79 @@ export default function TopNav({ onToggleSidebar, sidebarCollapsed }) {
                         <div className="text-[9px] text-zinc-500 font-mono">{ws.type}</div>
                       </div>
                     </div>
-                    <span className="text-[10px] text-purple-400 font-mono font-bold shrink-0">
-                      ⚡ {ws.credits}
-                    </span>
                   </button>
                 ))}
+
+                <div className="pt-1 border-t border-white/10">
+                  <button
+                    onClick={() => {
+                      setWorkspaceMenuOpen(false);
+                      setCreateWsModalOpen(true);
+                    }}
+                    className="w-full text-left px-3 py-2 rounded-xl bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 font-bold transition flex items-center gap-2 text-xs"
+                  >
+                    <span>➕</span>
+                    <span>Create New Workspace</span>
+                  </button>
+                </div>
               </div>
             )}
           </div>
         </div>
+
+        {/* Create Workspace Modal */}
+        {createWsModalOpen && (
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className="bg-[#14161b] border border-white/10 rounded-2xl p-6 max-w-sm w-full space-y-4 shadow-2xl">
+              <div className="flex items-center justify-between border-b border-white/10 pb-3">
+                <h3 className="font-extrabold text-sm text-white font-grotesk">🏢 Create New Workspace</h3>
+                <button onClick={() => setCreateWsModalOpen(false)} className="text-zinc-500 hover:text-white text-xs">✕</button>
+              </div>
+
+              <form onSubmit={handleCreateWorkspace} className="space-y-3">
+                <div className="space-y-1">
+                  <label className="text-[11px] font-bold text-zinc-300 font-grotesk">Workspace Name</label>
+                  <input
+                    type="text"
+                    required
+                    value={newWsName}
+                    onChange={(e) => setNewWsName(e.target.value)}
+                    placeholder="e.g. Acme Marketing Studio"
+                    className="w-full bg-black/60 border border-white/10 rounded-xl p-2.5 text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-purple-500"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[11px] font-bold text-zinc-300 font-grotesk">Workspace Description</label>
+                  <input
+                    type="text"
+                    value={newWsDesc}
+                    onChange={(e) => setNewWsDesc(e.target.value)}
+                    placeholder="e.g. Dedicated video AI campaign workspace"
+                    className="w-full bg-black/60 border border-white/10 rounded-xl p-2.5 text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-purple-500"
+                  />
+                </div>
+
+                <div className="flex items-center justify-end gap-2 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setCreateWsModalOpen(false)}
+                    className="px-4 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-bold"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={creatingWs}
+                    className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold shadow"
+                  >
+                    {creatingWs ? 'Creating...' : 'Create Workspace'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
 
         {/* Right Actions: Credit Badge, Admin, User Profile */}
         <div className="flex items-center gap-2 shrink-0">
@@ -105,7 +228,7 @@ export default function TopNav({ onToggleSidebar, sidebarCollapsed }) {
             className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/30 text-purple-300 transition text-xs font-bold font-mono"
           >
             <span>⚡</span>
-            <span>{user?.credits || activeWsObj.credits} Credits</span>
+            <span>{user?.credits !== undefined ? user.credits : 1250} Credits</span>
           </Link>
 
           {(user?.role === 'super_admin' || user?.permissions?.includes('platform:admin')) && (

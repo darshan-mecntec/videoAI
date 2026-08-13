@@ -1,11 +1,23 @@
 'use client';
 
 import { useState } from 'react';
+import { usePathname } from 'next/navigation';
 import TopNav from './top-nav';
 import Sidebar from './sidebar';
 
 export default function AppShell({ children }) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const pathname = usePathname();
+
+  const isAdminPortal = pathname?.startsWith('/admin');
+
+  if (isAdminPortal) {
+    return (
+      <div className="min-h-screen bg-[#07080a] text-zinc-100 font-sans selection:bg-purple-500 selection:text-white">
+        {children}
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-[#0f1113] text-zinc-100 font-sans">

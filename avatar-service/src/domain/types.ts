@@ -4,6 +4,17 @@ export type AvatarStatus = 'Training' | 'Ready' | 'Failed';
 export type VoiceGender = 'Female' | 'Male' | 'Neutral';
 export type VoiceCategory = 'Lifelike' | 'Standard' | 'Cloned';
 
+export interface AvatarLook {
+  id: string;
+  name: string;
+  thumbnail_url: string;
+  video_url: string;
+  asset_id?: string;
+  duration_sec: number; // default 5
+  outfit_style: string;
+  created_at: string;
+}
+
 export interface Avatar {
   id: string;
   user_id: string;
@@ -17,6 +28,7 @@ export interface Avatar {
   assigned_voice_name?: string;
   status: AvatarStatus;
   pose: string; // 'Upper Body' | 'Portrait' | 'Full Body'
+  looks?: AvatarLook[];
   is_system: boolean; // true = created by Super Admin as default template
   created_at: string;
   updated_at: string;

@@ -1,22 +1,67 @@
 import { VideoGenerationRequest, VideoJob, AppError, VideoProviderName } from './types';
 import { ProviderRegistry } from './providerRegistry';
 import { VideoJobRepository } from '../infra/repository';
+import { AbacPolicyEngine, UserAuthContext } from './abacPolicy';
 
 export class VideoService {
+  private policyEngine: AbacPolicyEngine;
+
   constructor(
     private registry: ProviderRegistry,
     private repo: VideoJobRepository
-  ) {}
+  ) {
+    this.policyEngine = new AbacPolicyEngine(repo);
+  }
 
   /**
-   * Validates the request, selects provider via registry, submits real job to provider API.
+   * Validates the request, enforces ABAC policy, selects provider via registry, submits real job to provider API.
    */
-  async submitGenerationJob(request: VideoGenerationRequest): Promise<VideoJob> {
+  async submitGenerationJob(request: VideoGenerationRequest, authContext?: UserAuthContext): Promise<VideoJob> {
     this.validateRequest(request);
 
-    const provider = await this.registry.resolveProvider(request);
-    const job = await provider.submitJob(request);
-    return this.repo.saveJob(job);
+    if (authContext) {
+      await this.policyEngine.enforceGenerationPolicy(request, authContext);
+    }
+
+    const candidateProviders = this.registry.getAllProviders()
+      .filter(p => p.supportsStage(request.stage));
+
+    let primaryProvider = await this.registry.resolveProvider(request);
+    let job: VideoJob | null = null;
+    let lastError: any = null;
+
+    // 1. Try primary selected provider
+    try {
+      job = await primaryProvider.submitJob(request);
+    } catch (err: any) {
+      console.warn(`[VideoService] Primary provider '${primaryProvider.id}' failed (${err.message}). Initiating Multi-Provider Cascade Fallback...`);
+      lastError = err;
+    }
+
+    // 2. Cascade Fallback Chain: Try secondary configured providers if primary fails
+    if (!job) {
+      for (const fallback of candidateProviders) {
+        if (fallback.id === primaryProvider.id) continue;
+        try {
+          console.log(`[VideoService] 🔄 Cascading fallback to provider '${fallback.id}'...`);
+          job = await fallback.submitJob(request);
+          if (job) break;
+        } catch (fbErr: any) {
+          console.warn(`[VideoService] Fallback provider '${fallback.id}' failed (${fbErr.message})`);
+          lastError = fbErr;
+        }
+      }
+    }
+
+    if (!job) {
+      throw lastError || new AppError(503, 'ALL_PROVIDERS_FAILED', 'All configured AI video providers failed to accept the job.');
+    }
+
+    const saved = await this.repo.saveJob(job);
+    if (saved.status === 'succeeded' && saved.output_url) {
+      this.registerAssetWithAssetService(saved).catch((err) => console.error('[VideoService] Failed to auto-register asset:', err));
+    }
+    return saved;
   }
 
   /**
@@ -39,7 +84,11 @@ export class VideoService {
     }
 
     const updated = await provider.pollJobStatus(job.provider_job_id, jobId, job.request);
-    return this.repo.updateJob(jobId, updated);
+    const saved = await this.repo.updateJob(jobId, updated);
+    if (saved.status === 'succeeded' && saved.output_url) {
+      this.registerAssetWithAssetService(saved).catch((err) => console.error('[VideoService] Failed to auto-register asset:', err));
+    }
+    return saved;
   }
 
   /**
@@ -110,6 +159,43 @@ export class VideoService {
     }
     if (request.preferred_provider && !(['openai', 'runway', 'pika', 'luma', 'google_veo', 'kling', 'wan_2_6'] as VideoProviderName[]).includes(request.preferred_provider)) {
       throw new AppError(400, 'INVALID_INPUT', `Unknown provider '${request.preferred_provider}'. Valid options: openai, runway, pika, luma, google_veo, kling, wan_2_6.`);
+    }
+  }
+
+  private async registerAssetWithAssetService(job: VideoJob): Promise<void> {
+    if (!job.output_url) return;
+    const assetServiceUrl = process.env.ASSET_SERVICE_URL || 'http://localhost:3006';
+
+    const payload = {
+      project_id: job.request.project_id || 'proj-default',
+      user_id: job.request.user_id || 'usr-1c94e86b',
+      org_id: job.request.org_id || 'org-main-1',
+      name: job.request.prompt.substring(0, 50) + (job.request.prompt.length > 50 ? '...' : ''),
+      type: 'video',
+      url: job.output_url,
+      thumbnail_url: job.thumbnail_url || job.output_url,
+      starred: false,
+      prompt: job.request.prompt,
+      credits: 100,
+      metadata: {
+        resolution: job.request.resolution || '1080p',
+        duration_sec: job.request.duration_seconds || 5,
+        mime_type: 'video/mp4',
+        file_size_bytes: 12000000,
+        prompt_used: job.request.prompt,
+        provider_id: job.provider,
+        model_id: job.provider,
+      },
+    };
+
+    try {
+      await fetch(`${assetServiceUrl}/v1/assets`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+    } catch (err) {
+      console.warn('[VideoService] registerAssetWithAssetService HTTP error:', err);
     }
   }
 }

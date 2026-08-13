@@ -17,6 +17,24 @@ export type HealthStatusType = 'healthy' | 'degraded' | 'unavailable';
 
 export type EnvironmentType = 'production' | 'staging';
 
+export interface ModelCatalogueEntry {
+  id: string;
+  display_name: string;
+  provider_slug: string;
+  provider_model_id: string;
+  modality: 'text-to-video' | 'image-to-video' | 'text-to-image' | 'voice-tts' | 'avatar-lipsync';
+  quality_tier: 'fast' | 'standard' | 'pro';
+  credits_per_unit: number;
+  unit: 'per-image' | 'per-second' | 'per-1k-chars' | 'per-call';
+  provider_cost_usd: number;
+  description: string;
+  is_enabled: boolean;
+  is_featured: boolean;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface Provider {
   id: string;
   slug: string;

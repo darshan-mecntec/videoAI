@@ -15,20 +15,30 @@ export interface AssetMetadata {
 export interface MediaAsset {
   id: string;
   project_id: string;
+  user_id?: string;
+  org_id?: string;
   name: string;
   type: AssetType;
   url: string;
   thumbnail_url?: string;
+  starred?: boolean;
+  prompt?: string;
+  credits?: number;
   metadata: AssetMetadata;
   created_at: string;
 }
 
 export interface CreateAssetInput {
   project_id?: string;
+  user_id?: string;
+  org_id?: string;
   name: string;
   type: AssetType;
   url: string;
   thumbnail_url?: string;
+  starred?: boolean;
+  prompt?: string;
+  credits?: number;
   metadata: AssetMetadata;
 }
 

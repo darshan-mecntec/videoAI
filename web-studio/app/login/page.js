@@ -52,17 +52,30 @@ export default function LoginPage() {
           </p>
         </div>
 
-        {/* First Time Setup Hint */}
-        <div className="p-3.5 rounded-xl bg-purple-500/10 border border-purple-500/20 text-xs space-y-1">
-          <div className="font-bold text-purple-300 font-grotesk flex items-center gap-1.5">
-            <span>🛡️</span> First-Time Platform Setup?
+        {/* Pre-Seeded Default Accounts Helper */}
+        <div className="p-3.5 rounded-xl bg-purple-500/10 border border-purple-500/20 text-xs space-y-2">
+          <div className="font-bold text-purple-300 font-grotesk flex items-center justify-between">
+            <span className="flex items-center gap-1.5">🔑 Pre-Seeded Accounts Ready</span>
           </div>
           <p className="text-[11px] text-zinc-300 leading-relaxed">
-            If you haven't created an account yet, visit the{' '}
-            <Link href="/signup" className="text-purple-400 font-bold underline">
-              Signup Page
-            </Link>. The very first account registered automatically receives <strong>Super Administrator</strong> rights.
+            Use the 1-click credential buttons below to log in:
           </p>
+          <div className="flex gap-2 pt-1">
+            <button
+              type="button"
+              onClick={() => { setEmail('admin@aether.ai'); setPassword('admin123'); }}
+              className="flex-1 py-1.5 rounded-lg bg-purple-600/30 hover:bg-purple-600/50 text-purple-200 border border-purple-500/40 text-[11px] font-bold transition font-mono"
+            >
+              🛡️ Super Admin
+            </button>
+            <button
+              type="button"
+              onClick={() => { setEmail('user@aether.ai'); setPassword('user123'); }}
+              className="flex-1 py-1.5 rounded-lg bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-200 border border-indigo-500/40 text-[11px] font-bold transition font-mono"
+            >
+              👤 Standard User
+            </button>
+          </div>
         </div>
 
         {/* Error Callout */}

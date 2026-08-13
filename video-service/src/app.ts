@@ -4,7 +4,8 @@ import { requestIdMiddleware, errorHandlerMiddleware } from './api/middleware';
 import { createRouter } from './api/routes';
 import { VideoService } from './domain/videoService';
 import { ProviderRegistry } from './domain/providerRegistry';
-import { VideoJobRepository, InMemoryVideoJobRepository } from './infra/repository';
+import { VideoJobRepository, JsonFileVideoJobRepository } from './infra/repository';
+import { PostgresVideoJobRepository } from './infra/postgresVideoJobRepository';
 
 export interface AppDependencies {
   repo?: VideoJobRepository;
@@ -17,8 +18,9 @@ export function createApp(deps: AppDependencies = {}): {
   videoService: VideoService;
   registry: ProviderRegistry;
 } {
+  const dbUrl = process.env.DATABASE_URL;
   const registry = deps.registry || new ProviderRegistry();
-  const repo = deps.repo || new InMemoryVideoJobRepository();
+  const repo = deps.repo || (dbUrl ? new PostgresVideoJobRepository(dbUrl) : new JsonFileVideoJobRepository());
   const videoService = deps.videoService || new VideoService(registry, repo);
 
   const app = express();

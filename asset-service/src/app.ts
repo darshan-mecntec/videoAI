@@ -3,7 +3,7 @@ import cors from 'cors';
 import { requestIdMiddleware, errorHandlerMiddleware } from './api/middleware';
 import { createRouter } from './api/routes';
 import { AssetService } from './domain/assetService';
-import { AssetRepository, InMemoryAssetRepository } from './infra/repository';
+import { AssetRepository, JsonFileAssetRepository } from './infra/repository';
 import { PostgresAssetRepository } from './infra/postgresAssetRepository';
 
 export interface AppDependencies {
@@ -17,7 +17,7 @@ export function createApp(deps: AppDependencies = {}): {
   assetService: AssetService;
 } {
   const dbUrl = process.env.DATABASE_URL;
-  const repo = deps.repo || (dbUrl ? new PostgresAssetRepository(dbUrl) : new InMemoryAssetRepository());
+  const repo = deps.repo || (dbUrl ? new PostgresAssetRepository(dbUrl) : new JsonFileAssetRepository());
   const assetService = deps.assetService || new AssetService(repo);
 
   const app = express();

@@ -23,10 +23,18 @@ export function createRouter(videoService: VideoService): Router {
         cta_text: req.body.cta_text,
         preferred_provider: req.body.preferred_provider,
         project_id: req.body.project_id,
-        org_id: req.body.org_id,
-        user_id: req.body.user_id,
+        org_id: req.body.org_id || (req.headers['x-org-id'] as string) || 'org-cybertech-1',
+        user_id: req.body.user_id || (req.headers['x-user-id'] as string) || 'usr-admin-1',
       };
-      const job = await videoService.submitGenerationJob(request);
+
+      const userRole = (req.headers['x-user-role'] as any) || req.body.user_role || 'super_admin';
+      const authContext = {
+        userId: request.user_id!,
+        orgId: request.org_id!,
+        role: userRole,
+      };
+
+      const job = await videoService.submitGenerationJob(request, authContext);
       res.status(202).json({ job });
     } catch (err) {
       next(err);

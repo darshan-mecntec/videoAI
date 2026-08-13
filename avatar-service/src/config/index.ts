@@ -4,6 +4,7 @@ export interface Config {
   databaseUrl?: string;
   authServiceUrl: string;
   providerRegistryUrl: string;
+  assetServiceUrl: string;
 }
 
 export const config: Config = {
@@ -12,4 +13,5 @@ export const config: Config = {
   databaseUrl: process.env.DATABASE_URL,
   authServiceUrl: process.env.NEXT_PUBLIC_AUTH_API_URL || 'http://localhost:3008',
   providerRegistryUrl: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001',
+  assetServiceUrl: process.env.NEXT_PUBLIC_ASSET_API_URL || 'http://localhost:3006',
 };

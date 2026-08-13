@@ -28,7 +28,7 @@ export default function Sidebar({ collapsed, onToggle }) {
     {
       title: 'ASSETS & CONTENT',
       items: [
-        { href: '/workspace', label: 'Workspace Hub', icon: '📁', tag: 'All Content' },
+        { href: '/workspace', label: 'Workspace Hub', icon: '📁', tag: 'Library' },
         { href: '/avatars', label: 'Avatars', icon: '👤', tag: 'Voice/Face' },
       ],
     },

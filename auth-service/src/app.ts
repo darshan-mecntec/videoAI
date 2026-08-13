@@ -21,6 +21,10 @@ export function createApp(deps: AppDependencies = {}): {
   const repo = deps.repo || (dbUrl ? new PostgresAuthRepository(dbUrl) : new JsonFileAuthRepository());
   const authService = deps.authService || new AuthService(repo);
 
+  authService.seedDefaultAuth().catch((err) => {
+    console.warn('[auth-service] Warning seeding default auth accounts:', err.message || err);
+  });
+
   const app = express();
   app.use(cors({
     origin: process.env.CORS_ORIGIN || '*',

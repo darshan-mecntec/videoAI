@@ -98,9 +98,26 @@ export class GoogleVeoAdapter extends VideoProvider {
     };
 
     let lastError: AppError | null = null;
+    const providerRegistryUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
-    // Key pool failover: loop through all available keys until one succeeds
-    for (const key of keys) {
+    // Attempt to select least-loaded key via DWLC Pool Manager
+    let poolSelectedKey = '';
+    try {
+      const selectRes = await fetch(`${providerRegistryUrl}/v1/pools/select-key`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ provider: 'google-veo', modelId: 'veo-3.1-generate-preview' }),
+      }).then(r => r.json() as Promise<any>).catch(() => null);
+
+      if (selectRes && selectRes.key && selectRes.key.keySecret) {
+        poolSelectedKey = selectRes.key.keySecret;
+      }
+    } catch (_) {}
+
+    const keyList = poolSelectedKey ? [poolSelectedKey, ...keys.filter(k => k !== poolSelectedKey)] : keys;
+
+    // Key pool failover: loop through DWLC prioritized keys
+    for (const key of keyList) {
       try {
         const response = await fetch(
           `${VEO_API_BASE}/models/${VEO_MODEL}:predictLongRunning?key=${key}`,

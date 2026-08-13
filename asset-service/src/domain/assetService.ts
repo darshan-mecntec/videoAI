@@ -16,10 +16,15 @@ export class AssetService {
       {
         id: 'asset-video-demo-1',
         project_id: 'proj-default',
+        user_id: 'usr-1c94e86b',
+        org_id: 'org-main-1',
         name: 'CyberTech AI Commercial Teaser',
         type: 'video',
         url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
         thumbnail_url: 'https://images.unsplash.com/photo-1536240478700-b869070f9279?w=500',
+        starred: true,
+        prompt: 'Cinematic commercial teaser for CyberTech AI, hyperrealistic 3d render',
+        credits: 100,
         metadata: {
           resolution: '1920x1080',
           duration_sec: 15,
@@ -35,10 +40,15 @@ export class AssetService {
       {
         id: 'asset-image-demo-1',
         project_id: 'proj-default',
+        user_id: 'usr-1c94e86b',
+        org_id: 'org-main-1',
         name: 'Luxury Wireless Headphones 4K',
         type: 'image',
         url: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=1200',
         thumbnail_url: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500',
+        starred: false,
+        prompt: 'Studio product photo of Luxury Wireless Headphones on marble pedestal, 8k',
+        credits: 15,
         metadata: {
           resolution: '3840x2160',
           mime_type: 'image/png',
@@ -56,7 +66,7 @@ export class AssetService {
     }
   }
 
-  async listAssets(options?: { type?: AssetType; project_id?: string }): Promise<MediaAsset[]> {
+  async listAssets(options?: { type?: AssetType; project_id?: string; user_id?: string; org_id?: string; starred?: boolean }): Promise<MediaAsset[]> {
     return this.repo.findAssets(options);
   }
 
@@ -76,10 +86,15 @@ export class AssetService {
     const asset: MediaAsset = {
       id: uuidv4(),
       project_id: input.project_id || 'proj-default',
+      user_id: input.user_id,
+      org_id: input.org_id,
       name: input.name,
       type: input.type,
       url: input.url,
       thumbnail_url: input.thumbnail_url || input.url,
+      starred: input.starred || false,
+      prompt: input.prompt || input.metadata?.prompt_used || '',
+      credits: input.credits || 15,
       metadata: input.metadata || { mime_type: 'application/octet-stream', file_size_bytes: 0 },
       created_at: new Date().toISOString(),
     };
@@ -87,7 +102,17 @@ export class AssetService {
     return this.repo.createAsset(asset);
   }
 
-  async uploadAsset(filename: string, fileData: string, type: AssetType): Promise<MediaAsset> {
+  async updateAsset(id: string, patch: Partial<MediaAsset>): Promise<MediaAsset> {
+    await this.getAssetById(id); // Throws 404 if not found
+    return this.repo.updateAsset(id, patch);
+  }
+
+  async deleteAsset(id: string): Promise<boolean> {
+    await this.getAssetById(id); // Throws 404 if not found
+    return this.repo.deleteAsset(id);
+  }
+
+  async uploadAsset(filename: string, fileData: string, type: AssetType, user_id?: string, org_id?: string): Promise<MediaAsset> {
     if (!filename || !fileData) {
       throw new AppError(400, 'INVALID_INPUT', 'Filename and fileData are required for upload');
     }
@@ -98,10 +123,15 @@ export class AssetService {
     const asset: MediaAsset = {
       id: `asset-${uuidv4().substring(0, 8)}`,
       project_id: 'proj-default',
+      user_id,
+      org_id,
       name: filename,
       type: isVideo ? 'video' : isImage ? 'image' : 'audio',
       url: fileData.startsWith('data:') ? fileData : `data:image/png;base64,${fileData}`,
       thumbnail_url: fileData.startsWith('data:') ? fileData : `data:image/png;base64,${fileData}`,
+      starred: false,
+      prompt: 'Uploaded file',
+      credits: 0,
       metadata: {
         file_size_bytes: fileData.length,
         mime_type: isVideo ? 'video/mp4' : 'image/png',
